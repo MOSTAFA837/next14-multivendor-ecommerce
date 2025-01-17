@@ -1,7 +1,11 @@
+import { ThemeToggle } from "@/components/shared/theme-toggle";
+
 export default function Home() {
   return (
-    <div>
-      <h1 className="text-2xl text-blue-800">multivendor-ecommerce</h1>
+    <div className="p-5">
+      <div className="w-100 flex justify-end">
+        <ThemeToggle />
+      </div>
     </div>
   );
 }
