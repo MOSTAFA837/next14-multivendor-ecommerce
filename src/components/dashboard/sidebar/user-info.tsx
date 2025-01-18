@@ -24,10 +24,10 @@ export default function UserInfo({ user }: { user: User | null }) {
                 {user?.firstName} {user?.lastName}
               </AvatarFallback>
             </Avatar>
-            <div className="flex flex-col gap-y-1">
+            <div className="flex flex-col gap-y-1 truncate">
               {user?.firstName} {user?.lastName}
               <span className="text-muted-foreground">
-                {user?.emailAddresses[0].emailAddress}
+                {user?.emailAddresses[0].emailAddress.split("@")[0]}
               </span>
               <span className="w-fit">
                 <Badge variant="secondary" className="capitalize">
