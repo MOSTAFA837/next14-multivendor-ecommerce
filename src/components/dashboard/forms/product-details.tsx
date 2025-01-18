@@ -201,6 +201,7 @@ export default function ProductDetails({
                     setDetails={setColors}
                     initialDetail={{ color: "" }}
                     header="Colors"
+                    colorPicker
                   />
 
                   {errors.colors && (
