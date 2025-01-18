@@ -25,6 +25,7 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import ImageUpload from "../shared/image-upload";
 import ImagesPreviewGrid from "../shared/images-preview-grid";
+import ClickToAddInputs from "./click-to-add";
 
 interface ProductDetailsProps {
   data?: Partial<ProductWithVariantType>;
@@ -79,6 +80,11 @@ export default function ProductDetails({
 
     getSubCategories();
   }, [form]);
+
+  // Whenever colors, sizes, keywords changes we update the form values
+  useEffect(() => {
+    form.setValue("colors", colors);
+  }, [colors, form]);
 
   // extract errors and loading states from form
   const errors = form.formState.errors;
@@ -152,6 +158,22 @@ export default function ProductDetails({
                     </FormItem>
                   )}
                 />
+
+                {/* colors */}
+                <div className="w-full flex flex-col gap-y-3 xl:pl-5">
+                  <ClickToAddInputs
+                    details={colors}
+                    setDetails={setColors}
+                    initialDetail={{ color: "" }}
+                    header="Colors"
+                  />
+
+                  {errors.colors && (
+                    <span className="text-sm font-medium text-destructive">
+                      {errors.colors.message}
+                    </span>
+                  )}
+                </div>
               </div>
             </form>
           </Form>
