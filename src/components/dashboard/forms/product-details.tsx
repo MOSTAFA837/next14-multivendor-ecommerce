@@ -30,6 +30,13 @@ import ClickToAddInputs from "./click-to-add";
 import InputFieldset from "../shared/input-fieldset";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface ProductDetailsProps {
   data?: Partial<ProductWithVariantType>;
@@ -184,26 +191,171 @@ export default function ProductDetails({
                 </div>
               </div>
 
-              {/* Sizes*/}
-              <div className="w-full flex flex-col gap-y-3">
-                <ClickToAddInputs
-                  details={sizes}
-                  setDetails={setSizes}
-                  initialDetail={{
-                    size: "",
-                    quantity: 1,
-                    price: 0.01,
-                    discount: 0,
-                  }}
-                  header="Sizes,  Quantities,  Prices,  Discounts"
-                />
+              {/* Name */}
+              <InputFieldset label="Name">
+                <div className="flex flex-col lg:flex-row gap-4">
+                  <FormField
+                    disabled={isLoading}
+                    control={form.control}
+                    name="name"
+                    render={({ field }) => (
+                      <FormItem className="flex-1">
+                        <FormLabel>Product name</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Name" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
-                {errors.sizes && (
-                  <span className="text-sm font-medium text-destructive">
-                    {errors.sizes.message}
-                  </span>
-                )}
-              </div>
+                  <FormField
+                    disabled={isLoading}
+                    control={form.control}
+                    name="variantName"
+                    render={({ field }) => (
+                      <FormItem className="flex-1">
+                        <FormLabel>Variant name</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Name" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              </InputFieldset>
+
+              {/* Description */}
+              <InputFieldset label="Description">
+                <div className="flex flex-col lg:flex-row gap-4">
+                  <FormField
+                    disabled={isLoading}
+                    control={form.control}
+                    name="description"
+                    render={({ field }) => (
+                      <FormItem className="flex-1">
+                        <FormLabel>Product description</FormLabel>
+                        <FormControl>
+                          <Textarea placeholder="Description" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    disabled={isLoading}
+                    control={form.control}
+                    name="variantDescription"
+                    render={({ field }) => (
+                      <FormItem className="flex-1">
+                        <FormLabel>Variant description</FormLabel>
+                        <FormControl>
+                          <Textarea placeholder="Description" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              </InputFieldset>
+
+              {/* Category - SubCategory */}
+              <InputFieldset label="Category">
+                <div className="flex gap-4">
+                  <FormField
+                    disabled={isLoading}
+                    control={form.control}
+                    name="categoryId"
+                    render={({ field }) => (
+                      <FormItem className="flex-1">
+                        <FormLabel>Product Category</FormLabel>
+                        <Select
+                          disabled={isLoading || categories.length == 0}
+                          onValueChange={field.onChange}
+                          value={field.value}
+                          defaultValue={field.value}
+                        >
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue
+                                defaultValue={field.value}
+                                placeholder="Select a category"
+                              />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {categories.map((category) => (
+                              <SelectItem key={category.id} value={category.id}>
+                                {category.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  {form.watch().categoryId && (
+                    <FormField
+                      disabled={isLoading}
+                      control={form.control}
+                      name="subCategoryId"
+                      render={({ field }) => (
+                        <FormItem className="flex-1">
+                          <FormLabel>Product SubCategory</FormLabel>
+                          <Select
+                            disabled={isLoading || categories.length == 0}
+                            onValueChange={field.onChange}
+                            value={field.value}
+                            defaultValue={field.value}
+                          >
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue
+                                  defaultValue={field.value}
+                                  placeholder="Select a category"
+                                />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {subCategories.map((sub) => (
+                                <SelectItem key={sub.id} value={sub.id}>
+                                  {sub.name}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  )}
+                </div>
+              </InputFieldset>
+
+              {/* Sizes*/}
+              <InputFieldset label="Sizes,  Quantities,  Prices,  Discounts">
+                <div className="w-full flex flex-col gap-y-3">
+                  <ClickToAddInputs
+                    details={sizes}
+                    setDetails={setSizes}
+                    initialDetail={{
+                      size: "",
+                      quantity: 1,
+                      price: 0.01,
+                      discount: 0,
+                    }}
+                  />
+
+                  {errors.sizes && (
+                    <span className="text-sm font-medium text-destructive">
+                      {errors.sizes.message}
+                    </span>
+                  )}
+                </div>
+              </InputFieldset>
             </form>
           </Form>
         </CardContent>

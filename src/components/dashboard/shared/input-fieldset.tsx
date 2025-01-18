@@ -14,8 +14,8 @@ export default function InputFieldset({
   return (
     <div>
       <fieldset className="border rounded-md p-4">
-        <legend className="px-2">
-          <FormLabel>{label}</FormLabel>
+        <legend className="px-2 ">
+          <FormLabel className="font-bold">{label}</FormLabel>
         </legend>
 
         {description && (
