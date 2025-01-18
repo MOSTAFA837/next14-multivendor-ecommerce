@@ -108,11 +108,13 @@ export default function ClickToAddInputs({
           {Object.keys(detail).map((property, propertyIndex) => (
             <div className="flex items-center gap-x-4" key={propertyIndex}>
               <Input
-                className="w-full"
+                className="w-28"
                 type={typeof detail[property] === "number" ? "number" : "text"}
                 name={property}
                 placeholder={property}
                 value={detail[property] as string}
+                min={typeof detail[property] === "number" ? 0 : undefined}
+                step="0.01"
                 onChange={(e) => {
                   handleDetailsChange(
                     index,

@@ -12,6 +12,7 @@ import {
   FormControl,
   FormField,
   FormItem,
+  FormLabel,
   FormMessage,
 } from "@/components/ui/form";
 import { ProductFormSchema } from "@/lib/schemas";
@@ -26,6 +27,9 @@ import { z } from "zod";
 import ImageUpload from "../shared/image-upload";
 import ImagesPreviewGrid from "../shared/images-preview-grid";
 import ClickToAddInputs from "./click-to-add";
+import InputFieldset from "../shared/input-fieldset";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 
 interface ProductDetailsProps {
   data?: Partial<ProductWithVariantType>;
@@ -43,6 +47,9 @@ export default function ProductDetails({
   const [colors, setColors] = useState<{ color: string }[]>(
     data?.colors || [{ color: "" }]
   );
+  const [sizes, setSizes] = useState<
+    { size: string; price: number; quantity: number; discount: number }[]
+  >(data?.sizes || [{ size: "", price: 0, quantity: 0, discount: 0 }]);
 
   const form = useForm<z.infer<typeof ProductFormSchema>>({
     mode: "onChange",
@@ -84,7 +91,8 @@ export default function ProductDetails({
   // Whenever colors, sizes, keywords changes we update the form values
   useEffect(() => {
     form.setValue("colors", colors);
-  }, [colors, form]);
+    form.setValue("sizes", sizes);
+  }, [colors, sizes, form]);
 
   // extract errors and loading states from form
   const errors = form.formState.errors;
@@ -174,6 +182,27 @@ export default function ProductDetails({
                     </span>
                   )}
                 </div>
+              </div>
+
+              {/* Sizes*/}
+              <div className="w-full flex flex-col gap-y-3">
+                <ClickToAddInputs
+                  details={sizes}
+                  setDetails={setSizes}
+                  initialDetail={{
+                    size: "",
+                    quantity: 1,
+                    price: 0.01,
+                    discount: 0,
+                  }}
+                  header="Sizes,  Quantities,  Prices,  Discounts"
+                />
+
+                {errors.sizes && (
+                  <span className="text-sm font-medium text-destructive">
+                    {errors.sizes.message}
+                  </span>
+                )}
               </div>
             </form>
           </Form>
