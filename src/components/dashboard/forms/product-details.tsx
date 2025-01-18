@@ -38,6 +38,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { generateRandomSKU } from "@/lib/utils";
+import { WithOutContext as ReactTags } from "react-tag-input";
 
 interface ProductDetailsProps {
   data?: Partial<ProductWithVariantType>;
@@ -58,6 +59,23 @@ export default function ProductDetails({
   const [sizes, setSizes] = useState<
     { size: string; price: number; quantity: number; discount: number }[]
   >(data?.sizes || [{ size: "", price: 0, quantity: 0, discount: 0 }]);
+
+  // Handle keywords input
+  const [keywords, setKeywords] = useState<string[]>(data?.keywords || []);
+
+  interface Keyword {
+    id: string;
+    text: string;
+  }
+
+  const handleAddition = (keyword: Keyword) => {
+    if (keywords.length === 10) return;
+    setKeywords([...keywords, keyword.text]);
+  };
+
+  const handleDeleteKeyword = (i: number) => {
+    setKeywords(keywords.filter((_, index) => index !== i));
+  };
 
   const form = useForm<z.infer<typeof ProductFormSchema>>({
     mode: "onChange",
@@ -100,7 +118,8 @@ export default function ProductDetails({
   useEffect(() => {
     form.setValue("colors", colors);
     form.setValue("sizes", sizes);
-  }, [colors, sizes, form]);
+    form.setValue("keywords", keywords);
+  }, [colors, sizes, keywords, form]);
 
   // extract errors and loading states from form
   const errors = form.formState.errors;
@@ -391,6 +410,48 @@ export default function ProductDetails({
                   )}
                 </div>
               </InputFieldset>
+
+              {/* Variant image - Keywords*/}
+              <div className="flex items-center gap-10 py-14">
+                {/* Keywords */}
+                <div className="w-full flex-1 space-y-3">
+                  <FormField
+                    control={form.control}
+                    name="keywords"
+                    render={({ field }) => (
+                      <FormItem className="relative flex-1">
+                        <FormLabel>Product Keywords</FormLabel>
+                        <FormControl>
+                          <ReactTags
+                            handleAddition={handleAddition}
+                            placeholder="Keywords (e.g., winter jacket, warm, stylish)"
+                            classNames={{
+                              tagInputField:
+                                "bg-background border rounded-md p-2 w-full focus:outline-none",
+                            }}
+                          />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+                  <div className="flex flex-wrap gap-1">
+                    {keywords.map((k, i) => (
+                      <div
+                        key={i}
+                        className="text-xs inline-flex items-center px-3 py-1 bg-blue-200 text-blue-700 rounded-full gap-x-2"
+                      >
+                        <span>{k}</span>
+                        <span
+                          className="cursor-pointer"
+                          onClick={() => handleDeleteKeyword(i)}
+                        >
+                          x
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
             </form>
           </Form>
         </CardContent>
