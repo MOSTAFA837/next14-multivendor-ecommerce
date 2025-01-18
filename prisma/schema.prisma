@@ -26,35 +26,64 @@ model User {
   email     String   @unique
   picture   String   @db.Text
   role      Role     @default(USER)
+  stores    Store[]  @relation("UserStores")
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
 
 model Category {
-  id       String  @id @default(uuid())
-  name     String
-  image    String
-  url      String
-  featured Boolean @default(false)
-
+  id            String        @id @default(uuid())
+  name          String
+  image         String
+  url           String
+  featured      Boolean       @default(false)
   subCategories SubCategory[] @relation("CategoryToSubcategory")
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
 }
 
 model SubCategory {
-  id       String  @id @default(uuid())
-  name     String
-  image    String
-  url      String
-  featured Boolean @default(false)
-
+  id         String   @id @default(uuid())
+  name       String
+  image      String
+  url        String
+  featured   Boolean  @default(false)
   categoryId String
   category   Category @relation("CategoryToSubcategory", fields: [categoryId], references: [id])
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 
   @@index([categoryId])
+}
+
+enum StoreStatus {
+  PENDING
+  ACTIVE
+  BANNED
+  DISABLED
+}
+
+model Store {
+  id                     String      @id @default(uuid())
+  name                   String
+  description            String      @db.Text
+  email                  String      @unique
+  phone                  String
+  url                    String      @unique
+  logo                   String
+  cover                  String
+  status                 StoreStatus @default(PENDING)
+  averageRating          Float       @default(0)
+  featured               Boolean     @default(false)
+  returnPolicy           String?
+  defaultShippingService String?
+  defaultShippingFees    Float?
+  defaultDeliveryTimeMin Int?
+  defaultDeliveryTimeMax Int?
+  userId                 String
+  user                   User        @relation("UserStores", fields: [userId], references: [id])
+  createdAt              DateTime    @default(now())
+  updatedAt              DateTime    @default(now()) @updatedAt
+
+  @@index([userId])
 }

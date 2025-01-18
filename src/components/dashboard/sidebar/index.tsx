@@ -2,14 +2,21 @@ import { FC } from "react";
 import { currentUser } from "@clerk/nextjs/server";
 
 import Logo from "@/components/shared/logo";
-import { adminDashboardSidebarOptions } from "@/constants/data";
+import {
+  adminDashboardSidebarOptions,
+  SellerDashboardSidebarOptions,
+} from "@/constants/data";
 
 import UserInfo from "./user-info";
 import SidebarNavAdmin from "./nav-admin";
+import { Store } from "@prisma/client";
+import SidebarNavSeller from "./nav-seller";
 
 interface SidebarProps {
   isAdmin?: boolean;
+  stores?: Store[];
 }
+
 const Sidebar: FC<SidebarProps> = async ({ isAdmin }) => {
   const user = await currentUser();
 
@@ -17,8 +24,14 @@ const Sidebar: FC<SidebarProps> = async ({ isAdmin }) => {
     <div className="w-[300px] border-r pt-9 p-4 justify-between h-full flex flex-col fixed top-0 left-0 bottom-0">
       <Logo width="100%" height="140px" />
       <span className="mt-3" />
+
       {user && <UserInfo user={user} />}
-      {isAdmin && <SidebarNavAdmin menuLinks={adminDashboardSidebarOptions} />}
+
+      {isAdmin ? (
+        <SidebarNavAdmin menuLinks={adminDashboardSidebarOptions} />
+      ) : (
+        <SidebarNavSeller menuLinks={SellerDashboardSidebarOptions} />
+      )}
     </div>
   );
 };
