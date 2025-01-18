@@ -23,6 +23,7 @@ export default async function AdminCategoriesPage() {
       data={categories}
       searchPlaceholder="Search categories..."
       columns={columns}
+      newTabLink="/dashboard/admin/categories/new"
     />
   );
 }
