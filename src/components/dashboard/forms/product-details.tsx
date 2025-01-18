@@ -39,6 +39,8 @@ import {
 } from "@/components/ui/select";
 import { generateRandomSKU } from "@/lib/utils";
 import { WithOutContext as ReactTags } from "react-tag-input";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 
 interface ProductDetailsProps {
   data?: Partial<ProductWithVariantType>;
@@ -453,6 +455,53 @@ export default function ProductDetails({
                   </div>
                 </div>
               </div>
+
+              {/* Is On Sale */}
+              <InputFieldset
+                label="Sale"
+                description="Is your product on sale ?"
+              >
+                <div>
+                  <label
+                    htmlFor="yes"
+                    className="ml-5 flex items-center gap-x-2 cursor-pointer"
+                  >
+                    <FormField
+                      control={form.control}
+                      name="isSale"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormControl>
+                            <>
+                              <input
+                                type="checkbox"
+                                id="yes"
+                                checked={field.value}
+                                onChange={field.onChange}
+                                hidden
+                              />
+                              <Checkbox
+                                checked={field.value}
+                                // @ts-ignore
+                                onCheckedChange={field.onChange}
+                              />
+                            </>
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+                    <span>Yes</span>
+                  </label>
+                </div>
+              </InputFieldset>
+
+              <Button type="submit" disabled={isLoading}>
+                {isLoading
+                  ? "loading..."
+                  : data?.productId && data.variantId
+                  ? "Save product information"
+                  : "Create product"}
+              </Button>
             </form>
           </Form>
         </CardContent>
