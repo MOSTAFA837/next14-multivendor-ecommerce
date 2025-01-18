@@ -49,3 +49,14 @@ export const getDominantColors = (imgUrl: string): Promise<string[]> => {
     };
   });
 };
+
+export function generateRandomSKU(prefix = "SKU", length = 8) {
+  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+  let sku = prefix + "-"; // Optional prefix for the SKU
+
+  for (let i = 0; i < length; i++) {
+    sku += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+
+  return sku;
+}

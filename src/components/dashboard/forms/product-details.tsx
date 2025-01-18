@@ -37,6 +37,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { generateRandomSKU } from "@/lib/utils";
 
 interface ProductDetailsProps {
   data?: Partial<ProductWithVariantType>;
@@ -70,7 +71,7 @@ export default function ProductDetails({
       categoryId: data?.categoryId,
       subCategoryId: data?.subCategoryId,
       brand: data?.brand,
-      sku: data?.sku,
+      sku: data?.sku || generateRandomSKU(),
       colors: data?.colors || [{ color: "" }],
       sizes: data?.sizes,
       keywords: data?.keywords,
@@ -332,6 +333,40 @@ export default function ProductDetails({
                       )}
                     />
                   )}
+                </div>
+              </InputFieldset>
+
+              {/* Brand, SKU */}
+              <InputFieldset label="Brand, Sku">
+                <div className="flex flex-col lg:flex-row gap-4">
+                  <FormField
+                    disabled={isLoading}
+                    control={form.control}
+                    name="brand"
+                    render={({ field }) => (
+                      <FormItem className="flex-1">
+                        <FormLabel>Product brand</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Brand" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    disabled={isLoading}
+                    control={form.control}
+                    name="sku"
+                    render={({ field }) => (
+                      <FormItem className="flex-1">
+                        <FormLabel>Product sku</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Sku" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
                 </div>
               </InputFieldset>
 
