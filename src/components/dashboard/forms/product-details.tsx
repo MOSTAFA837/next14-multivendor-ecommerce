@@ -29,7 +29,6 @@ import ImagesPreviewGrid from "../shared/images-preview-grid";
 import ClickToAddInputs from "./click-to-add";
 import InputFieldset from "../shared/input-fieldset";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
@@ -86,23 +85,28 @@ export default function ProductDetails({
     [theme]
   );
 
+  // States
   const [subCategories, setSubCategories] = useState<SubCategory[]>([]);
   const [images, setImages] = useState<{ url: string }[]>([]);
   const [colors, setColors] = useState<{ color: string }[]>(
     data?.colors || [{ color: "" }]
   );
+
   const [sizes, setSizes] = useState<
     { size: string; price: number; quantity: number; discount: number }[]
   >(data?.sizes || [{ size: "", price: 0, quantity: 0, discount: 0 }]);
-  // State for product specs
+
   const [productSpecs, setProductSpecs] = useState<
     { name: string; value: string }[]
   >(data?.product_specs || [{ name: "", value: "" }]);
 
-  // State for product variant specs
   const [variantSpecs, setVariantSpecs] = useState<
     { name: string; value: string }[]
   >(data?.variant_specs || [{ name: "", value: "" }]);
+
+  const [questions, setQuestions] = useState<
+    { question: string; answer: string }[]
+  >(data?.questions || [{ question: "", answer: "" }]);
 
   // Handle keywords input
   const [keywords, setKeywords] = useState<string[]>(data?.keywords || []);
@@ -139,6 +143,7 @@ export default function ProductDetails({
       sizes: data?.sizes,
       product_specs: data?.product_specs,
       variant_specs: data?.variant_specs,
+      questions: data?.questions,
       keywords: data?.keywords,
       isSale: data?.isSale,
       saleEndDate:
@@ -166,15 +171,6 @@ export default function ProductDetails({
     getSubCategories();
   }, [form]);
 
-  // Whenever colors, sizes, keywords changes we update the form values
-  useEffect(() => {
-    form.setValue("colors", colors);
-    form.setValue("sizes", sizes);
-    form.setValue("keywords", keywords);
-    form.setValue("product_specs", productSpecs);
-    form.setValue("variant_specs", variantSpecs);
-  }, [colors, sizes, keywords, form, productSpecs, variantSpecs]);
-
   // extract errors and loading states from form
   const errors = form.formState.errors;
   const isLoading = form.formState.isSubmitting;
@@ -201,6 +197,7 @@ export default function ProductDetails({
           sizes: values.sizes,
           product_specs: values.product_specs,
           variant_specs: values.variant_specs,
+          questions: values.questions,
           keywords: values.keywords,
           createdAt: new Date(),
           updatedAt: new Date(),
@@ -229,8 +226,15 @@ export default function ProductDetails({
     }
   };
 
-  console.log("product_specs", form.getValues().product_specs);
-  console.log("variant_specs", form.getValues().variant_specs);
+  // Whenever colors, sizes, keywords changes we update the form values
+  useEffect(() => {
+    form.setValue("colors", colors);
+    form.setValue("sizes", sizes);
+    form.setValue("keywords", keywords);
+    form.setValue("product_specs", productSpecs);
+    form.setValue("variant_specs", variantSpecs);
+    form.setValue("questions", questions);
+  }, [colors, sizes, keywords, form, productSpecs, variantSpecs, questions]);
 
   return (
     <AlertDialog>
@@ -559,6 +563,8 @@ export default function ProductDetails({
                         details={productSpecs}
                         setDetails={setProductSpecs}
                         initialDetail={{ name: "", value: "" }}
+                        containerClassName="flex-1"
+                        inputClassName="w-full"
                       />
 
                       {errors.product_specs && (
@@ -575,6 +581,8 @@ export default function ProductDetails({
                         details={variantSpecs}
                         setDetails={setVariantSpecs}
                         initialDetail={{ name: "", value: "" }}
+                        containerClassName="flex-1"
+                        inputClassName="w-full"
                       />
 
                       {errors.variant_specs && (
@@ -587,9 +595,30 @@ export default function ProductDetails({
                 </Tabs>
               </InputFieldset>
 
+              {/* Questions*/}
+              <InputFieldset label="Questions & Answers">
+                <div className="w-full flex flex-col gap-y-3">
+                  <ClickToAddInputs
+                    details={questions}
+                    setDetails={setQuestions}
+                    initialDetail={{
+                      question: "",
+                      answer: "",
+                    }}
+                    containerClassName="flex-1"
+                    inputClassName="w-full"
+                  />
+                  {errors.questions && (
+                    <span className="text-sm font-medium text-destructive">
+                      {errors.questions.message}
+                    </span>
+                  )}
+                </div>
+              </InputFieldset>
+
               {/* Variant image - Keywords*/}
               <div className="flex items-center gap-10 py-14">
-                {/* Variant image */}
+                {/* Variant image  */}
                 <div className="border-r pr-10">
                   <FormField
                     control={form.control}

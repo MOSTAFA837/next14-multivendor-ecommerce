@@ -1,4 +1,5 @@
 import { Input } from "@/components/ui/input";
+import { cn } from "@/lib/utils";
 import { PaintBucket } from "lucide-react";
 import { Dispatch, SetStateAction, useState } from "react";
 import { SketchPicker } from "react-color";
@@ -13,6 +14,8 @@ interface ClickToAddInputsProps {
   initialDetail?: Detail;
   header?: string;
   colorPicker?: boolean;
+  containerClassName?: string;
+  inputClassName?: string;
 }
 
 export default function ClickToAddInputs({
@@ -21,6 +24,8 @@ export default function ClickToAddInputs({
   initialDetail = {},
   header,
   colorPicker,
+  containerClassName,
+  inputClassName,
 }: ClickToAddInputsProps) {
   const [colorPickerIndex, setColorPickerIndex] = useState<number | null>(null);
 
@@ -112,7 +117,10 @@ export default function ClickToAddInputs({
       {details.map((detail, index) => (
         <div key={index} className="flex items-center gap-x-4">
           {Object.keys(detail).map((property, propertyIndex) => (
-            <div className="flex items-center gap-x-4" key={propertyIndex}>
+            <div
+              className={cn("flex items-center gap-x-4", containerClassName)}
+              key={propertyIndex}
+            >
               {property === "color" && colorPicker && (
                 <div className="flex gap-x-4">
                   <button
@@ -143,7 +151,7 @@ export default function ClickToAddInputs({
               )}
 
               <Input
-                className="w-28"
+                className={cn("w-28 placeholder:capitalize", inputClassName)}
                 type={typeof detail[property] === "number" ? "number" : "text"}
                 name={property}
                 placeholder={property}

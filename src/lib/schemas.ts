@@ -273,4 +273,18 @@ export const ProductFormSchema = z.object({
         message: "All product variant specs inputs must be filled correctly.",
       }
     ),
+  questions: z
+    .object({
+      question: z.string(),
+      answer: z.string(),
+    })
+    .array()
+    .min(1, "Please provide at least one product question.")
+    .refine(
+      (questions) =>
+        questions.every((q) => q.question.length > 0 && q.answer.length > 0),
+      {
+        message: "All product question inputs must be filled correctly.",
+      }
+    ),
 });
