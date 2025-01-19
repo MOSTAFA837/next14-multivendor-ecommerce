@@ -46,6 +46,14 @@ import { upsertProduct } from "@/queries/product";
 import { v4 } from "uuid";
 import { useRouter } from "next/navigation";
 
+// React date time picker
+import { format } from "date-fns";
+import DateTimePicker from "react-datetime-picker";
+import "react-datetime-picker/dist/DateTimePicker.css";
+import "react-calendar/dist/Calendar.css";
+import "react-clock/dist/Clock.css";
+import { Dot } from "lucide-react";
+
 interface ProductDetailsProps {
   data?: Partial<ProductWithVariantType>;
   categories: Category[];
@@ -104,6 +112,8 @@ export default function ProductDetails({
       sizes: data?.sizes,
       keywords: data?.keywords,
       isSale: data?.isSale,
+      saleEndDate:
+        data?.saleEndDate || format(new Date(), "yyyy-MM-dd'T'HH:mm:ss"),
     },
   });
 
@@ -577,6 +587,41 @@ export default function ProductDetails({
                     />
                     <span>Yes</span>
                   </label>
+
+                  {form.getValues().isSale && (
+                    <div className="mt5">
+                      <p className="text-sm text-main-secondary dark:text-gray-400 pb-3 flex">
+                        <Dot className="-me-1" />
+                        When sale does end ?
+                      </p>
+
+                      <div className="flex items-center gap-x-5">
+                        <FormField
+                          control={form.control}
+                          name="saleEndDate"
+                          render={({ field }) => (
+                            <FormItem className="ml-4">
+                              <FormControl>
+                                <DateTimePicker
+                                  className="inline-flex items-center gap-2 p-2 border rounded-md shadow-sm"
+                                  onChange={(date) => {
+                                    field.onChange(
+                                      date
+                                        ? format(date, "yyyy-MM-dd'T'HH:mm:ss")
+                                        : ""
+                                    );
+                                  }}
+                                  value={
+                                    field.value ? new Date(field.value) : null
+                                  }
+                                />
+                              </FormControl>
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+                    </div>
+                  )}
                 </div>
               </InputFieldset>
 

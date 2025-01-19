@@ -189,6 +189,7 @@ export const ProductFormSchema = z.object({
     })
     .uuid(),
   isSale: z.boolean().default(false),
+  saleEndDate: z.string().optional(),
   brand: z
     .string({
       required_error: "Product brand is mandatory.",
