@@ -1,6 +1,8 @@
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 import ColorThief from "colorthief";
+import { PrismaClient } from "@prisma/client";
+import { db } from "./db";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -60,3 +62,27 @@ export function generateRandomSKU(prefix = "SKU", length = 8) {
 
   return sku;
 }
+
+export const generateUniqueSlug = async (
+  baseSlug: string,
+  model: keyof PrismaClient,
+  field: string = "slug",
+  separator: string = "-"
+) => {
+  let slug = baseSlug;
+  let suffix = 1;
+
+  while (true) {
+    const exisitngRecord = await (db[model] as any).findFirst({
+      where: {
+        [field]: slug,
+      },
+    });
+    if (!exisitngRecord) {
+      break;
+    }
+    slug = `${slug}${separator}${suffix}`;
+    suffix += 1;
+  }
+  return slug;
+};

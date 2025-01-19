@@ -41,6 +41,10 @@ import { generateRandomSKU } from "@/lib/utils";
 import { WithOutContext as ReactTags } from "react-tag-input";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import { useToast } from "@/hooks/use-toast";
+import { upsertProduct } from "@/queries/product";
+import { v4 } from "uuid";
+import { useRouter } from "next/navigation";
 
 interface ProductDetailsProps {
   data?: Partial<ProductWithVariantType>;
@@ -53,6 +57,9 @@ export default function ProductDetails({
   categories,
   storeUrl,
 }: ProductDetailsProps) {
+  const { toast } = useToast();
+  const router = useRouter();
+
   const [subCategories, setSubCategories] = useState<SubCategory[]>([]);
   const [images, setImages] = useState<{ url: string }[]>([]);
   const [colors, setColors] = useState<{ color: string }[]>(
@@ -128,7 +135,49 @@ export default function ProductDetails({
   const isLoading = form.formState.isSubmitting;
 
   const handleSubmit = async (values: z.infer<typeof ProductFormSchema>) => {
-    console.log(values);
+    try {
+      await upsertProduct(
+        {
+          productId: data?.productId ? data.productId : v4(),
+          variantId: data?.variantId ? data.variantId : v4(),
+          name: values.name,
+          description: values.description,
+          variantName: values.variantName,
+          variantDescription: values.variantDescription || "",
+          images: values.images,
+          categoryId: values.categoryId,
+          subCategoryId: values.subCategoryId,
+          isSale: values.isSale,
+          brand: values.brand,
+          sku: values.sku,
+          colors: values.colors,
+          sizes: values.sizes,
+          keywords: values.keywords,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
+        storeUrl
+      );
+
+      toast({
+        title:
+          data?.productId && data?.variantId
+            ? "Product has been updated."
+            : `Congratulations! product is now created.`,
+      });
+
+      if (data?.productId && data?.variantId) {
+        router.refresh();
+      } else {
+        router.push(`/dashboard/seller/stores/${storeUrl}/products`);
+      }
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "Oops!",
+        description: error.toString(),
+      });
+    }
   };
 
   return (
@@ -427,6 +476,7 @@ export default function ProductDetails({
                         <FormControl>
                           <ReactTags
                             handleAddition={handleAddition}
+                            handleDelete={() => {}}
                             placeholder="Keywords (e.g., winter jacket, warm, stylish)"
                             classNames={{
                               tagInputField:
