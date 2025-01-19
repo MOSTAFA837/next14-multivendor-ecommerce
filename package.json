@@ -49,6 +49,7 @@
     "date-fns": "^4.1.0",
     "embla-carousel-react": "^8.5.2",
     "input-otp": "^1.4.2",
+    "jodit-react": "^5.0.9",
     "lucide-react": "^0.473.0",
     "next": "14.2.4",
     "next-cloudinary": "^6.16.0",

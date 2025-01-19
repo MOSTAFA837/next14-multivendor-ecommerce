@@ -252,21 +252,27 @@
 
 /* Jodit editor dark mode */
 .jodit_theme_dark.jodit-container {
-  background-color: #1a1b1f !important;
-  border-color: #eeeeee2e !important;
+  background-color: #020817 !important;
+  border-color: #1e293b !important;
+  border-radius: 8px !important;
+  padding: 5px !important;
 }
 
 .jodit_theme_dark .jodit-toolbar__box:not(:empty) {
-  background-color: #1a1b1f !important;
+  background-color: #020817 !important;
 }
 
 .jodit_theme_dark .jodit-wysiwyg {
-  background-color: #1a1b1f !important;
+  background-color: #020817 !important;
 }
 
 .jodit_theme_dark .jodit-toolbar-button__button:hover svg {
   stroke: #575757 !important;
   fill: #575757 !important;
+}
+
+.jodit_theme_dark .jodit-workplace + .jodit-status-bar:not(:empty) {
+  background-color: #020817 !important;
 }
 
 /* Calendar dark mode  */

@@ -139,8 +139,7 @@ export const ProductFormSchema = z.object({
     })
     .min(30, {
       message: "Product description should be at least 30 characters long.",
-    })
-    .max(800, { message: "Product description cannot exceed 800 characters." }),
+    }),
   variantName: z
     .string({
       required_error: "Product variant name is mandatory.",
@@ -158,13 +157,6 @@ export const ProductFormSchema = z.object({
     .string({
       required_error: "Product variant description is mandatory.",
       invalid_type_error: "Product variant description must be a valid string.",
-    })
-    .min(30, {
-      message:
-        "Product variant description should be at least 30 characters long.",
-    })
-    .max(500, {
-      message: "Product variant description cannot exceed 500 characters.",
     })
     .optional(),
   images: z

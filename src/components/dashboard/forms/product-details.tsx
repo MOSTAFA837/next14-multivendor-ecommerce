@@ -21,7 +21,7 @@ import { getSubCategoriesForCategory } from "@/queries/subCategory";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Category, SubCategory } from "@prisma/client";
 import { AlertDialog } from "@radix-ui/react-alert-dialog";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import ImageUpload from "../shared/image-upload";
@@ -53,6 +53,10 @@ import "react-datetime-picker/dist/DateTimePicker.css";
 import "react-calendar/dist/Calendar.css";
 import "react-clock/dist/Clock.css";
 import { Dot } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+
+import JoditEditor from "jodit-react";
+import { useTheme } from "next-themes";
 
 interface ProductDetailsProps {
   data?: Partial<ProductWithVariantType>;
@@ -67,6 +71,20 @@ export default function ProductDetails({
 }: ProductDetailsProps) {
   const { toast } = useToast();
   const router = useRouter();
+
+  // Jodit editor refs
+  const productDescEditor = useRef(null);
+  const variantDescEditor = useRef(null);
+
+  // Jodit configration
+  const { theme } = useTheme();
+
+  const config = useMemo(
+    () => ({
+      theme: theme === "dark" ? "dark" : "default",
+    }),
+    [theme]
+  );
 
   const [subCategories, setSubCategories] = useState<SubCategory[]>([]);
   const [images, setImages] = useState<{ url: string }[]>([]);
@@ -313,39 +331,64 @@ export default function ProductDetails({
                 </div>
               </InputFieldset>
 
-              {/* Description */}
+              {/* Descriptions  */}
               <InputFieldset label="Description">
-                <div className="flex flex-col lg:flex-row gap-4">
-                  <FormField
-                    disabled={isLoading}
-                    control={form.control}
-                    name="description"
-                    render={({ field }) => (
-                      <FormItem className="flex-1">
-                        <FormLabel>Product description</FormLabel>
-                        <FormControl>
-                          <Textarea placeholder="Description" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                <Tabs defaultValue="product" className="w-full">
+                  <TabsList className="w-full grid grid-cols-2">
+                    <TabsTrigger value="product">
+                      Product description
+                    </TabsTrigger>
+                    <TabsTrigger value="variant">
+                      Variant description
+                    </TabsTrigger>
+                  </TabsList>
 
-                  <FormField
-                    disabled={isLoading}
-                    control={form.control}
-                    name="variantDescription"
-                    render={({ field }) => (
-                      <FormItem className="flex-1">
-                        <FormLabel>Variant description</FormLabel>
-                        <FormControl>
-                          <Textarea placeholder="Description" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
+                  <TabsContent value="product">
+                    <FormField
+                      disabled={isLoading}
+                      control={form.control}
+                      name="description"
+                      render={({ field }) => (
+                        <FormItem className="flex-1">
+                          <FormControl>
+                            <JoditEditor
+                              ref={productDescEditor}
+                              value={form.getValues().description}
+                              onChange={(content) => {
+                                form.setValue("description", content);
+                              }}
+                              config={config}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </TabsContent>
+
+                  <TabsContent value="variant">
+                    <FormField
+                      disabled={isLoading}
+                      control={form.control}
+                      name="variantDescription"
+                      render={({ field }) => (
+                        <FormItem className="flex-1">
+                          <FormControl>
+                            <JoditEditor
+                              ref={variantDescEditor}
+                              value={form.getValues().variantDescription}
+                              onChange={(content) => {
+                                form.setValue("description", content);
+                              }}
+                              config={config}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </TabsContent>
+                </Tabs>
               </InputFieldset>
 
               {/* Category - SubCategory */}
