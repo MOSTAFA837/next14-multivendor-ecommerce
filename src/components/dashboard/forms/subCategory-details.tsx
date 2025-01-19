@@ -63,7 +63,6 @@ const SubCategoryDetails: FC<SubCategoryDetailsProps> = ({
       // Setting default form values from data (if available)
       name: data?.name,
       image: data?.image ? [{ url: data?.image }] : [],
-      url: data?.url,
       featured: data?.featured,
       categoryId: data?.categoryId,
     },
@@ -71,14 +70,12 @@ const SubCategoryDetails: FC<SubCategoryDetailsProps> = ({
   // Loading status based on form submission
   const isLoading = form.formState.isSubmitting;
   const formData = form.watch();
-  console.log("formData", formData);
   // Reset form values when data changes
   useEffect(() => {
     if (data) {
       form.reset({
         name: data?.name,
         image: [{ url: data?.image }],
-        url: data?.url,
         featured: data?.featured,
         categoryId: data.categoryId,
       });
@@ -94,7 +91,7 @@ const SubCategoryDetails: FC<SubCategoryDetailsProps> = ({
         id: data?.id ? data.id : v4(),
         name: values.name,
         image: values.image[0].url,
-        url: values.url,
+        url: values.name.replaceAll(" ", "-").toLocaleLowerCase(),
         featured: values.featured,
         categoryId: values.categoryId,
         createdAt: new Date(),
@@ -177,20 +174,7 @@ const SubCategoryDetails: FC<SubCategoryDetailsProps> = ({
                   </FormItem>
                 )}
               />
-              <FormField
-                disabled={isLoading}
-                control={form.control}
-                name="url"
-                render={({ field }) => (
-                  <FormItem className="flex-1">
-                    <FormLabel>SubCategory url</FormLabel>
-                    <FormControl>
-                      <Input placeholder="/subCategory-url" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+
               <FormField
                 disabled={isLoading}
                 control={form.control}

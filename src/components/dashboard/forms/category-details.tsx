@@ -51,7 +51,6 @@ const CategoryDetails: FC<CategoryDetailsProps> = ({ data }) => {
       // Setting default form values from data (if available)
       name: data?.name,
       image: data?.image ? [{ url: data?.image }] : [],
-      url: data?.url,
       featured: data?.featured,
     },
   });
@@ -63,7 +62,6 @@ const CategoryDetails: FC<CategoryDetailsProps> = ({ data }) => {
       form.reset({
         name: data?.name,
         image: [{ url: data?.image }],
-        url: data?.url,
         featured: data?.featured,
       });
     }
@@ -76,7 +74,7 @@ const CategoryDetails: FC<CategoryDetailsProps> = ({ data }) => {
         id: data?.id ? data.id : v4(),
         name: values.name,
         image: values.image[0].url,
-        url: values.url,
+        url: values.name.replaceAll(" ", "-").toLocaleLowerCase(),
         featured: values.featured,
         createdAt: new Date(),
         updatedAt: new Date(),
@@ -158,20 +156,7 @@ const CategoryDetails: FC<CategoryDetailsProps> = ({ data }) => {
                   </FormItem>
                 )}
               />
-              <FormField
-                disabled={isLoading}
-                control={form.control}
-                name="url"
-                render={({ field }) => (
-                  <FormItem className="flex-1">
-                    <FormLabel>Category url</FormLabel>
-                    <FormControl>
-                      <Input placeholder="/category-url" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+
               <FormField
                 control={form.control}
                 name="featured"

@@ -94,7 +94,7 @@ model Store {
 model Product {
   id            String           @id @default(uuid())
   name          String
-  description   String           @db.LongText
+  // description   String           @db.LongText
   slug          String           @unique
   brand         String
   rating        Float            @default(0)
@@ -109,17 +109,20 @@ model Product {
   subCategory   SubCategory      @relation("SubCategoryToProduct", fields: [subCategoryId], references: [id])
   specs         Spec[]           @relation("ProductSpec")
   questions     Question[]       @relation("ProductQuestion")
+  offerTagId    String
+  offerTag      OfferTag @relation("OfferTagToProduct", fields: [offerTagId], references: [id])
 
   @@index([storeId])
   @@index([categoryId])
   @@index([subCategoryId])
+  @@index([offerTagId])
 }
 
 model ProductVariant {
   id                 String                @id @default(uuid())
   variantName        String
-  variantDescription String?               @db.LongText
-  variantImage       String
+  // variantDescription String?               @db.LongText
+  // variantImage       String
   slug               String                @unique
   isSale             Boolean               @default(false)
   saleEndDate        String?
@@ -199,4 +202,13 @@ model Question {
   updatedAt DateTime @default(now()) @updatedAt
 
   @@index([productId])
+}
+
+model OfferTag {
+  id        String @id @default(uuid())
+  name      String
+  url       String
+  products  Product[] @relation("OfferTagToProduct")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
 }

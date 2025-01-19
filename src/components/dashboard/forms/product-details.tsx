@@ -1,5 +1,22 @@
 "use client";
 
+// React, Next.js
+import { FC, useEffect, useMemo, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
+
+// Prisma model
+import { Category, OfferTag, SubCategory } from "@prisma/client";
+
+// Form handling utilities
+import * as z from "zod";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+
+// Schema
+import { ProductFormSchema } from "@/lib/schemas";
+
+// UI Components
+import { AlertDialog } from "@/components/ui/alert-dialog";
 import {
   Card,
   CardContent,
@@ -15,20 +32,26 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { ProductFormSchema } from "@/lib/schemas";
-import { ProductWithVariantType } from "@/lib/types";
-import { getSubCategoriesForCategory } from "@/queries/subCategory";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { Category, SubCategory } from "@prisma/client";
-import { AlertDialog } from "@radix-ui/react-alert-dialog";
-import { useEffect, useMemo, useRef, useState } from "react";
-import { useForm } from "react-hook-form";
-import { z } from "zod";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import ImageUpload from "../shared/image-upload";
+import { useToast } from "@/hooks/use-toast";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+
+// Queries
+import { upsertProduct } from "@/queries/product";
+
+// ReactTags
+import { WithOutContext as ReactTags } from "react-tag-input";
+
+// Utils
+import { v4 } from "uuid";
+
+// Types
+import { ProductWithVariantType } from "@/lib/types";
 import ImagesPreviewGrid from "../shared/images-preview-grid";
 import ClickToAddInputs from "./click-to-add";
-import InputFieldset from "../shared/input-fieldset";
-import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
@@ -36,46 +59,50 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { generateRandomSKU } from "@/lib/utils";
-import { WithOutContext as ReactTags } from "react-tag-input";
-import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
-import { useToast } from "@/hooks/use-toast";
-import { upsertProduct } from "@/queries/product";
-import { v4 } from "uuid";
-import { useRouter } from "next/navigation";
 
 // React date time picker
-import { format } from "date-fns";
 import DateTimePicker from "react-datetime-picker";
 import "react-datetime-picker/dist/DateTimePicker.css";
 import "react-calendar/dist/Calendar.css";
 import "react-clock/dist/Clock.css";
-import { Dot } from "lucide-react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { format } from "date-fns";
+// import dynamic from "next/dynamic";
 
-import JoditEditor from "jodit-react";
+// Jodit text editor
+// const JoditEditor = dynamic(() => import("jodit-react"), {
+//   ssr: false,
+// });
+
+import InputFieldset from "../shared/input-fieldset";
+import { ArrowRight, Dot } from "lucide-react";
 import { useTheme } from "next-themes";
+import { getSubCategoriesForCategory } from "@/queries/subCategory";
 
 interface ProductDetailsProps {
   data?: Partial<ProductWithVariantType>;
   categories: Category[];
+  offerTags: OfferTag[];
   storeUrl: string;
 }
 
-export default function ProductDetails({
+const ProductDetails: FC<ProductDetailsProps> = ({
   data,
   categories,
+  offerTags,
   storeUrl,
-}: ProductDetailsProps) {
-  const { toast } = useToast();
-  const router = useRouter();
+}) => {
+  // Initializing necessary hooks
+  const { toast } = useToast(); // Hook for displaying toast messages
+  const router = useRouter(); // Hook for routing
+
+  // Is new variant page
+  const isNewVariantPage = data?.productId && !data?.variantId;
 
   // Jodit editor refs
-  const productDescEditor = useRef(null);
-  const variantDescEditor = useRef(null);
+  // const productDescEditor = useRef(null);
+  // const variantDescEditor = useRef(null);
 
-  // Jodit configration
+  // Jodit configuration
   const { theme } = useTheme();
 
   const config = useMemo(
@@ -85,28 +112,158 @@ export default function ProductDetails({
     [theme]
   );
 
-  // States
+  // State for subCategories
   const [subCategories, setSubCategories] = useState<SubCategory[]>([]);
-  const [images, setImages] = useState<{ url: string }[]>([]);
+
+  // State for colors
   const [colors, setColors] = useState<{ color: string }[]>(
     data?.colors || [{ color: "" }]
   );
 
+  // Temporary state for images
+  const [images, setImages] = useState<{ url: string }[]>([]);
+
+  // State for sizes
   const [sizes, setSizes] = useState<
     { size: string; price: number; quantity: number; discount: number }[]
-  >(data?.sizes || [{ size: "", price: 0, quantity: 0, discount: 0 }]);
+  >(data?.sizes || [{ size: "", quantity: 1, price: 0.01, discount: 0 }]);
 
+  // State for product specs
   const [productSpecs, setProductSpecs] = useState<
     { name: string; value: string }[]
   >(data?.product_specs || [{ name: "", value: "" }]);
 
+  // State for product variant specs
   const [variantSpecs, setVariantSpecs] = useState<
     { name: string; value: string }[]
   >(data?.variant_specs || [{ name: "", value: "" }]);
 
+  // State for product variant specs
   const [questions, setQuestions] = useState<
     { question: string; answer: string }[]
   >(data?.questions || [{ question: "", answer: "" }]);
+
+  // Form hook for managing form state and validation
+  const form = useForm<z.infer<typeof ProductFormSchema>>({
+    mode: "onChange", // Form validation mode
+    resolver: zodResolver(ProductFormSchema), // Resolver for form validation
+    defaultValues: {
+      // Setting default form values from data (if available)
+      name: data?.name,
+      // description: data?.description,
+      variantName: data?.variantName,
+      // variantDescription: data?.variantDescription,
+      images: data?.images || [],
+      // variantImage: data?.variantImage ? [{ url: data.variantImage }] : [],
+      categoryId: data?.categoryId,
+      offerTagId: data?.offerTagId,
+      subCategoryId: data?.subCategoryId,
+      brand: data?.brand,
+      sku: data?.sku,
+      colors: data?.colors,
+      sizes: data?.sizes,
+      product_specs: data?.product_specs,
+      variant_specs: data?.variant_specs,
+      keywords: data?.keywords,
+      questions: data?.questions,
+      isSale: data?.isSale || false,
+      saleEndDate:
+        data?.saleEndDate || format(new Date(), "yyyy-MM-dd'T'HH:mm:ss"),
+    },
+  });
+
+  const saleEndDate = form.getValues().saleEndDate || new Date().toISOString();
+
+  const formattedDate = new Date(saleEndDate).toLocaleString("en-Us", {
+    weekday: "short", // Abbreviated day name (e.g., "Mon")
+    month: "long", // Abbreviated month name (e.g., "Nov")
+    day: "2-digit", // Two-digit day (e.g., "25")
+    year: "numeric", // Full year (e.g., "2024")
+    hour: "2-digit", // Two-digit hour (e.g., "02")
+    minute: "2-digit", // Two-digit minute (e.g., "30")
+    second: "2-digit", // Two-digit second (optional)
+    hour12: false, // 12-hour format (change to false for 24-hour format)
+  });
+
+  // UseEffect to get subCategories when user pick/change a category
+  useEffect(() => {
+    const getSubCategories = async () => {
+      const res = await getSubCategoriesForCategory(form.watch().categoryId);
+      setSubCategories(res);
+    };
+    getSubCategories();
+  }, [form]);
+
+  // Extract errors state from form
+  const errors = form.formState.errors;
+
+  // Loading status based on form submission
+  const isLoading = form.formState.isSubmitting;
+
+  // Reset form values when data changes
+  useEffect(() => {
+    if (data) {
+      form.reset(data);
+    }
+  }, [data, form]);
+
+  // Submit handler for form submission
+  const handleSubmit = async (values: z.infer<typeof ProductFormSchema>) => {
+    console.log(values);
+    try {
+      // Upserting product data
+      const response = await upsertProduct(
+        {
+          productId: data?.productId ? data.productId : v4(),
+          variantId: data?.variantId ? data.variantId : v4(),
+          name: values.name,
+          // description: values.description,
+          variantName: values.variantName,
+          // variantDescription: values.variantDescription || "",
+          images: values.images,
+          // variantImage: values.variantImage[0].url,
+          categoryId: values.categoryId,
+          subCategoryId: values.subCategoryId,
+          offerTagId: values.offerTagId || "",
+          isSale: values.isSale,
+          saleEndDate: values.saleEndDate,
+          brand: values.brand,
+          sku: values.sku,
+          colors: values.colors,
+          sizes: values.sizes,
+          product_specs: values.product_specs,
+          variant_specs: values.variant_specs,
+          keywords: values.keywords,
+          questions: values.questions,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
+        storeUrl
+      );
+
+      // Displaying success message
+      toast({
+        title:
+          data?.productId && data?.variantId
+            ? "Product has been updated."
+            : `Congratulations! product is now created.`,
+      });
+
+      // Redirect or Refresh data
+      if (data?.productId && data?.variantId) {
+        router.refresh();
+      } else {
+        router.push(`/dashboard/seller/stores/${storeUrl}/products`);
+      }
+    } catch (error: any) {
+      // Handling form submission errors
+      toast({
+        variant: "destructive",
+        title: "Oops!",
+        description: error.toString(),
+      });
+    }
+  };
 
   // Handle keywords input
   const [keywords, setKeywords] = useState<string[]>(data?.keywords || []);
@@ -125,107 +282,6 @@ export default function ProductDetails({
     setKeywords(keywords.filter((_, index) => index !== i));
   };
 
-  const form = useForm<z.infer<typeof ProductFormSchema>>({
-    mode: "onChange",
-    resolver: zodResolver(ProductFormSchema),
-    defaultValues: {
-      name: data?.name,
-      description: data?.description,
-      variantName: data?.variantName,
-      variantDescription: data?.variantDescription,
-      images: data?.images || [],
-      variantImage: data?.variantImage ? [{ url: data.variantImage }] : [],
-      categoryId: data?.categoryId,
-      subCategoryId: data?.subCategoryId,
-      brand: data?.brand,
-      sku: data?.sku || generateRandomSKU(),
-      colors: data?.colors || [{ color: "" }],
-      sizes: data?.sizes,
-      product_specs: data?.product_specs,
-      variant_specs: data?.variant_specs,
-      questions: data?.questions,
-      keywords: data?.keywords,
-      isSale: data?.isSale,
-      saleEndDate:
-        data?.saleEndDate || format(new Date(), "yyyy-MM-dd'T'HH:mm:ss"),
-    },
-  });
-
-  // Reset form values when data changes
-  useEffect(() => {
-    if (data) {
-      form.reset({
-        ...data,
-        variantImage: data.variantImage ? [{ url: data.variantImage }] : [],
-      });
-    }
-  }, [data, form]);
-
-  // get subCategories when user pick/change a category
-  useEffect(() => {
-    const getSubCategories = async () => {
-      const res = await getSubCategoriesForCategory(form.watch().categoryId);
-      setSubCategories(res);
-    };
-
-    getSubCategories();
-  }, [form]);
-
-  // extract errors and loading states from form
-  const errors = form.formState.errors;
-  const isLoading = form.formState.isSubmitting;
-
-  const handleSubmit = async (values: z.infer<typeof ProductFormSchema>) => {
-    try {
-      await upsertProduct(
-        {
-          productId: data?.productId ? data.productId : v4(),
-          variantId: data?.variantId ? data.variantId : v4(),
-          name: values.name,
-          description: values.description,
-          variantName: values.variantName,
-          variantDescription: values.variantDescription || "",
-          images: values.images,
-          variantImage: values.variantImage[0].url,
-          categoryId: values.categoryId,
-          subCategoryId: values.subCategoryId,
-          isSale: values.isSale,
-          saleEndDate: values.saleEndDate,
-          brand: values.brand,
-          sku: values.sku,
-          colors: values.colors,
-          sizes: values.sizes,
-          product_specs: values.product_specs,
-          variant_specs: values.variant_specs,
-          questions: values.questions,
-          keywords: values.keywords,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        },
-        storeUrl
-      );
-
-      toast({
-        title:
-          data?.productId && data?.variantId
-            ? "Product has been updated."
-            : `Congratulations! product is now created.`,
-      });
-
-      if (data?.productId && data?.variantId) {
-        router.refresh();
-      } else {
-        router.push(`/dashboard/seller/stores/${storeUrl}/products`);
-      }
-    } catch (error: any) {
-      toast({
-        variant: "destructive",
-        title: "Oops!",
-        description: error.toString(),
-      });
-    }
-  };
-
   // Whenever colors, sizes, keywords changes we update the form values
   useEffect(() => {
     form.setValue("colors", colors);
@@ -234,20 +290,32 @@ export default function ProductDetails({
     form.setValue("product_specs", productSpecs);
     form.setValue("variant_specs", variantSpecs);
     form.setValue("questions", questions);
-  }, [colors, sizes, keywords, form, productSpecs, variantSpecs, questions]);
+  }, [
+    colors,
+    sizes,
+    keywords,
+    productSpecs,
+    questions,
+    variantSpecs,
+    data,
+    form,
+  ]);
 
   return (
     <AlertDialog>
       <Card className="w-full">
         <CardHeader>
-          <CardTitle>Product Information</CardTitle>
+          <CardTitle>
+            {isNewVariantPage
+              ? `Add a new variant to ${data.name}`
+              : "Create a new product"}
+          </CardTitle>
           <CardDescription>
             {data?.productId && data.variantId
               ? `Update ${data?.name} product information.`
               : " Lets create a product. You can edit product later from the product page."}
           </CardDescription>
         </CardHeader>
-
         <CardContent>
           <Form {...form}>
             <form
@@ -276,23 +344,25 @@ export default function ProductDetails({
                             colors={colors}
                             setColors={setColors}
                           />
-
                           <FormMessage className="!mt-4" />
-
                           <ImageUpload
                             dontShowPreview
                             type="standard"
                             value={field.value.map((image) => image.url)}
                             disabled={isLoading}
-                            onChange={(url) =>
+                            onChange={(url) => {
                               setImages((prevImages) => {
-                                const newImages = [...prevImages, { url }];
-                                field.onChange(newImages);
-                                return newImages;
-                              })
-                            }
+                                const updatedImages = [...prevImages, { url }];
+                                field.onChange(updatedImages);
+                                return updatedImages;
+                              });
+                            }}
                             onRemove={(url) =>
-                              field.value.filter((image) => image.url !== url)
+                              field.onChange([
+                                ...field.value.filter(
+                                  (current) => current.url !== url
+                                ),
+                              ])
                             }
                           />
                         </>
@@ -300,17 +370,15 @@ export default function ProductDetails({
                     </FormItem>
                   )}
                 />
-
-                {/* colors */}
+                {/* Colors */}
                 <div className="w-full flex flex-col gap-y-3 xl:pl-5">
                   <ClickToAddInputs
-                    details={colors}
+                    details={data?.colors || colors}
                     setDetails={setColors}
                     initialDetail={{ color: "" }}
                     header="Colors"
                     colorPicker
                   />
-
                   {errors.colors && (
                     <span className="text-sm font-medium text-destructive">
                       {errors.colors.message}
@@ -322,30 +390,29 @@ export default function ProductDetails({
               {/* Name */}
               <InputFieldset label="Name">
                 <div className="flex flex-col lg:flex-row gap-4">
-                  <FormField
-                    disabled={isLoading}
-                    control={form.control}
-                    name="name"
-                    render={({ field }) => (
-                      <FormItem className="flex-1">
-                        <FormLabel>Product name</FormLabel>
-                        <FormControl>
-                          <Input placeholder="Name" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
+                  {!isNewVariantPage && (
+                    <FormField
+                      disabled={isLoading}
+                      control={form.control}
+                      name="name"
+                      render={({ field }) => (
+                        <FormItem className="flex-1">
+                          <FormControl>
+                            <Input placeholder="Product name" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  )}
                   <FormField
                     disabled={isLoading}
                     control={form.control}
                     name="variantName"
                     render={({ field }) => (
                       <FormItem className="flex-1">
-                        <FormLabel>Variant name</FormLabel>
                         <FormControl>
-                          <Input placeholder="Name" {...field} />
+                          <Input placeholder="Variant name" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -354,18 +421,29 @@ export default function ProductDetails({
                 </div>
               </InputFieldset>
 
-              {/* Descriptions  */}
-              <InputFieldset label="Description">
-                <Tabs defaultValue="product" className="w-full">
-                  <TabsList className="w-full grid grid-cols-2">
-                    <TabsTrigger value="product">
-                      Product description
-                    </TabsTrigger>
-                    <TabsTrigger value="variant">
-                      Variant description
-                    </TabsTrigger>
-                  </TabsList>
-
+              {/* Product and variant description editors (tabs) */}
+              {/* <InputFieldset
+                label="Description"
+                description={
+                  isNewVariantPage
+                    ? ""
+                    : "Note: The product description is the main description for the product (Will display in every variant page). You can add an extra description specific to this variant using 'Variant description' tab."
+                }
+              >
+                <Tabs
+                  defaultValue={isNewVariantPage ? "variant" : "product"}
+                  className="w-full"
+                >
+                  {!isNewVariantPage && (
+                    <TabsList className="w-full grid grid-cols-2">
+                      <TabsTrigger value="product">
+                        Product description
+                      </TabsTrigger>
+                      <TabsTrigger value="variant">
+                        Variant description
+                      </TabsTrigger>
+                    </TabsList>
+                  )}
                   <TabsContent value="product">
                     <FormField
                       disabled={isLoading}
@@ -376,11 +454,11 @@ export default function ProductDetails({
                           <FormControl>
                             <JoditEditor
                               ref={productDescEditor}
+                              config={config}
                               value={form.getValues().description}
                               onChange={(content) => {
                                 form.setValue("description", content);
                               }}
-                              config={config}
                             />
                           </FormControl>
                           <FormMessage />
@@ -388,7 +466,6 @@ export default function ProductDetails({
                       )}
                     />
                   </TabsContent>
-
                   <TabsContent value="variant">
                     <FormField
                       disabled={isLoading}
@@ -399,11 +476,11 @@ export default function ProductDetails({
                           <FormControl>
                             <JoditEditor
                               ref={variantDescEditor}
-                              value={form.getValues().variantDescription}
-                              onChange={(content) => {
-                                form.setValue("description", content);
-                              }}
                               config={config}
+                              value={form.getValues().variantDescription || ""}
+                              onChange={(content) => {
+                                form.setValue("variantDescription", content);
+                              }}
                             />
                           </FormControl>
                           <FormMessage />
@@ -412,52 +489,18 @@ export default function ProductDetails({
                     />
                   </TabsContent>
                 </Tabs>
-              </InputFieldset>
+              </InputFieldset> */}
 
-              {/* Category - SubCategory */}
-              <InputFieldset label="Category">
-                <div className="flex gap-4">
-                  <FormField
-                    disabled={isLoading}
-                    control={form.control}
-                    name="categoryId"
-                    render={({ field }) => (
-                      <FormItem className="flex-1">
-                        <FormLabel>Product Category</FormLabel>
-                        <Select
-                          disabled={isLoading || categories.length == 0}
-                          onValueChange={field.onChange}
-                          value={field.value}
-                          defaultValue={field.value}
-                        >
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue
-                                defaultValue={field.value}
-                                placeholder="Select a category"
-                              />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {categories.map((category) => (
-                              <SelectItem key={category.id} value={category.id}>
-                                {category.name}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  {form.watch().categoryId && (
+              {/* Category - SubCategory - offer*/}
+              {!isNewVariantPage && (
+                <InputFieldset label="Category">
+                  <div className="flex gap-4">
                     <FormField
                       disabled={isLoading}
                       control={form.control}
-                      name="subCategoryId"
+                      name="categoryId"
                       render={({ field }) => (
                         <FormItem className="flex-1">
-                          <FormLabel>Product SubCategory</FormLabel>
                           <Select
                             disabled={isLoading || categories.length == 0}
                             onValueChange={field.onChange}
@@ -473,6 +516,45 @@ export default function ProductDetails({
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
+                              {categories.map((category) => (
+                                <SelectItem
+                                  key={category.id}
+                                  value={category.id}
+                                >
+                                  {category.name}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      disabled={isLoading}
+                      control={form.control}
+                      name="subCategoryId"
+                      render={({ field }) => (
+                        <FormItem className="flex-1">
+                          <Select
+                            disabled={
+                              isLoading ||
+                              categories.length == 0 ||
+                              !form.getValues().categoryId
+                            }
+                            onValueChange={field.onChange}
+                            value={field.value}
+                            defaultValue={field.value}
+                          >
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue
+                                  defaultValue={field.value}
+                                  placeholder="Select a sub-category"
+                                />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
                               {subCategories.map((sub) => (
                                 <SelectItem key={sub.id} value={sub.id}>
                                   {sub.name}
@@ -484,36 +566,72 @@ export default function ProductDetails({
                         </FormItem>
                       )}
                     />
-                  )}
-                </div>
-              </InputFieldset>
+                    {/* Offer Tag */}
+                    <FormField
+                      disabled={isLoading}
+                      control={form.control}
+                      name="offerTagId"
+                      render={({ field }) => (
+                        <FormItem className="flex-1">
+                          <Select
+                            disabled={isLoading || categories.length == 0}
+                            onValueChange={field.onChange}
+                            value={field.value}
+                            defaultValue={field.value}
+                          >
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue
+                                  defaultValue={field.value}
+                                  placeholder="Select an offer"
+                                />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {offerTags &&
+                                offerTags.map((offer) => (
+                                  <SelectItem key={offer.id} value={offer.id}>
+                                    {offer.name}
+                                  </SelectItem>
+                                ))}
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                </InputFieldset>
+              )}
 
-              {/* Brand, SKU */}
-              <InputFieldset label="Brand, Sku">
+              {/* Brand, Sku, Weight */}
+              <InputFieldset
+                label={isNewVariantPage ? "Sku, Weight" : "Brand, Sku, Weight"}
+              >
                 <div className="flex flex-col lg:flex-row gap-4">
-                  <FormField
-                    disabled={isLoading}
-                    control={form.control}
-                    name="brand"
-                    render={({ field }) => (
-                      <FormItem className="flex-1">
-                        <FormLabel>Product brand</FormLabel>
-                        <FormControl>
-                          <Input placeholder="Brand" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                  {!isNewVariantPage && (
+                    <FormField
+                      disabled={isLoading}
+                      control={form.control}
+                      name="brand"
+                      render={({ field }) => (
+                        <FormItem className="flex-1">
+                          <FormControl>
+                            <Input placeholder="Product brand" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  )}
                   <FormField
                     disabled={isLoading}
                     control={form.control}
                     name="sku"
                     render={({ field }) => (
                       <FormItem className="flex-1">
-                        <FormLabel>Product sku</FormLabel>
                         <FormControl>
-                          <Input placeholder="Sku" {...field} />
+                          <Input placeholder="Product sku" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -522,104 +640,10 @@ export default function ProductDetails({
                 </div>
               </InputFieldset>
 
-              {/* Sizes*/}
-              <InputFieldset label="Sizes,  Quantities,  Prices,  Discounts">
-                <div className="w-full flex flex-col gap-y-3">
-                  <ClickToAddInputs
-                    details={sizes}
-                    setDetails={setSizes}
-                    initialDetail={{
-                      size: "",
-                      quantity: 1,
-                      price: 0.01,
-                      discount: 0,
-                    }}
-                  />
-
-                  {errors.sizes && (
-                    <span className="text-sm font-medium text-destructive">
-                      {errors.sizes.message}
-                    </span>
-                  )}
-                </div>
-              </InputFieldset>
-
-              {/* Specifications*/}
-              <InputFieldset label="Specifications">
-                <Tabs className="w-full" defaultValue="productSpecs">
-                  <TabsList className="w-full grid grid-cols-2">
-                    <TabsTrigger value="productSpecs">
-                      Product Specifications
-                    </TabsTrigger>
-
-                    <TabsTrigger value="variantSpecs">
-                      Variant Specifications
-                    </TabsTrigger>
-                  </TabsList>
-
-                  <TabsContent value="productSpecs">
-                    <div className="w-full flex flex-col gap-y-3">
-                      <ClickToAddInputs
-                        details={productSpecs}
-                        setDetails={setProductSpecs}
-                        initialDetail={{ name: "", value: "" }}
-                        containerClassName="flex-1"
-                        inputClassName="w-full"
-                      />
-
-                      {errors.product_specs && (
-                        <span className="text-sm font-medium text-destructive">
-                          {errors.product_specs.message}
-                        </span>
-                      )}
-                    </div>
-                  </TabsContent>
-
-                  <TabsContent value="variantSpecs">
-                    <div className="w-full flex flex-col gap-y-3">
-                      <ClickToAddInputs
-                        details={variantSpecs}
-                        setDetails={setVariantSpecs}
-                        initialDetail={{ name: "", value: "" }}
-                        containerClassName="flex-1"
-                        inputClassName="w-full"
-                      />
-
-                      {errors.variant_specs && (
-                        <span className="text-sm font-medium text-destructive">
-                          {errors.variant_specs.message}
-                        </span>
-                      )}
-                    </div>
-                  </TabsContent>
-                </Tabs>
-              </InputFieldset>
-
-              {/* Questions*/}
-              <InputFieldset label="Questions & Answers">
-                <div className="w-full flex flex-col gap-y-3">
-                  <ClickToAddInputs
-                    details={questions}
-                    setDetails={setQuestions}
-                    initialDetail={{
-                      question: "",
-                      answer: "",
-                    }}
-                    containerClassName="flex-1"
-                    inputClassName="w-full"
-                  />
-                  {errors.questions && (
-                    <span className="text-sm font-medium text-destructive">
-                      {errors.questions.message}
-                    </span>
-                  )}
-                </div>
-              </InputFieldset>
-
               {/* Variant image - Keywords*/}
               <div className="flex items-center gap-10 py-14">
-                {/* Variant image  */}
-                <div className="border-r pr-10">
+                {/* Variant image */}
+                {/* <div className="border-r pr-10">
                   <FormField
                     control={form.control}
                     name="variantImage"
@@ -646,7 +670,7 @@ export default function ProductDetails({
                       </FormItem>
                     )}
                   />
-                </div>
+                </div> */}
 
                 {/* Keywords */}
                 <div className="w-full flex-1 space-y-3">
@@ -689,6 +713,118 @@ export default function ProductDetails({
                 </div>
               </div>
 
+              {/* Sizes*/}
+              <InputFieldset label="Sizes, Quantities, Prices, Disocunts">
+                <div className="w-full flex flex-col gap-y-3">
+                  <ClickToAddInputs
+                    details={sizes}
+                    setDetails={setSizes}
+                    initialDetail={{
+                      size: "",
+                      quantity: 1,
+                      price: 0.01,
+                      discount: 0,
+                    }}
+                    containerClassName="flex-1"
+                    inputClassName="w-full"
+                  />
+                  {errors.sizes && (
+                    <span className="text-sm font-medium text-destructive">
+                      {errors.sizes.message}
+                    </span>
+                  )}
+                </div>
+              </InputFieldset>
+
+              {/* Product and variant specs*/}
+              <InputFieldset
+                label="Specifications"
+                description={
+                  isNewVariantPage
+                    ? ""
+                    : "Note: The product specifications are the main specs for the product (Will display in every variant page). You can add extra specs specific to this variant using 'Variant Specifications' tab."
+                }
+              >
+                <Tabs
+                  defaultValue={
+                    isNewVariantPage ? "variantSpecs" : "productSpecs"
+                  }
+                  className="w-full"
+                >
+                  {!isNewVariantPage && (
+                    <TabsList className="w-full grid grid-cols-2">
+                      <TabsTrigger value="productSpecs">
+                        Product Specifications
+                      </TabsTrigger>
+                      <TabsTrigger value="variantSpecs">
+                        Variant Specifications
+                      </TabsTrigger>
+                    </TabsList>
+                  )}
+                  <TabsContent value="productSpecs">
+                    <div className="w-full flex flex-col gap-y-3">
+                      <ClickToAddInputs
+                        details={productSpecs}
+                        setDetails={setProductSpecs}
+                        initialDetail={{
+                          name: "",
+                          value: "",
+                        }}
+                        containerClassName="flex-1"
+                        inputClassName="w-full"
+                      />
+                      {errors.product_specs && (
+                        <span className="text-sm font-medium text-destructive">
+                          {errors.product_specs.message}
+                        </span>
+                      )}
+                    </div>
+                  </TabsContent>
+                  <TabsContent value="variantSpecs">
+                    <div className="w-full flex flex-col gap-y-3">
+                      <ClickToAddInputs
+                        details={variantSpecs}
+                        setDetails={setVariantSpecs}
+                        initialDetail={{
+                          name: "",
+                          value: "",
+                        }}
+                        containerClassName="flex-1"
+                        inputClassName="w-full"
+                      />
+                      {errors.variant_specs && (
+                        <span className="text-sm font-medium text-destructive">
+                          {errors.variant_specs.message}
+                        </span>
+                      )}
+                    </div>
+                  </TabsContent>
+                </Tabs>
+              </InputFieldset>
+
+              {/* Questions*/}
+              {!isNewVariantPage && (
+                <InputFieldset label="Questions & Answers">
+                  <div className="w-full flex flex-col gap-y-3">
+                    <ClickToAddInputs
+                      details={questions}
+                      setDetails={setQuestions}
+                      initialDetail={{
+                        question: "",
+                        answer: "",
+                      }}
+                      containerClassName="flex-1"
+                      inputClassName="w-full"
+                    />
+                    {errors.questions && (
+                      <span className="text-sm font-medium text-destructive">
+                        {errors.questions.message}
+                      </span>
+                    )}
+                  </div>
+                </InputFieldset>
+              )}
+
               {/* Is On Sale */}
               <InputFieldset
                 label="Sale"
@@ -727,12 +863,11 @@ export default function ProductDetails({
                   </label>
 
                   {form.getValues().isSale && (
-                    <div className="mt5">
+                    <div className="mt-5">
                       <p className="text-sm text-main-secondary dark:text-gray-400 pb-3 flex">
                         <Dot className="-me-1" />
                         When sale does end ?
                       </p>
-
                       <div className="flex items-center gap-x-5">
                         <FormField
                           control={form.control}
@@ -742,6 +877,16 @@ export default function ProductDetails({
                               <FormControl>
                                 <DateTimePicker
                                   className="inline-flex items-center gap-2 p-2 border rounded-md shadow-sm"
+                                  calendarIcon={
+                                    <span className="text-gray-500 hover:text-gray-600">
+                                      📅
+                                    </span>
+                                  }
+                                  clearIcon={
+                                    <span className="text-gray-500 hover:text-gray-600">
+                                      ✖️
+                                    </span>
+                                  }
                                   onChange={(date) => {
                                     field.onChange(
                                       date
@@ -757,6 +902,8 @@ export default function ProductDetails({
                             </FormItem>
                           )}
                         />
+                        <ArrowRight className="w-4 text-[#1087ff]" />
+                        <span>{formattedDate}</span>
                       </div>
                     </div>
                   )}
@@ -776,4 +923,6 @@ export default function ProductDetails({
       </Card>
     </AlertDialog>
   );
-}
+};
+
+export default ProductDetails;

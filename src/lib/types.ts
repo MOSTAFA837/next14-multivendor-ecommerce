@@ -17,12 +17,13 @@ export type ProductWithVariantType = {
   productId: string;
   variantId: string;
   name: string;
-  description: string;
+  // description: string;
   variantName: string;
-  variantDescription: string;
+  // variantDescription: string;
   images: { id?: string; url: string }[];
-  variantImage: string;
+  // variantImage: string;
   categoryId: string;
+  offerTagId: string;
   subCategoryId: string;
   isSale: boolean;
   saleEndDate?: string;

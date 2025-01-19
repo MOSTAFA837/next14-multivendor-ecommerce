@@ -1,6 +1,4 @@
-import { updateVariantImage } from "@/scripts/variantImage";
-
 export default async function Home() {
-  await updateVariantImage();
+  // await updateVariantImage();
   return <div></div>;
 }
