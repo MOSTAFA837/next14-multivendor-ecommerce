@@ -70,6 +70,7 @@ export const upsertProduct = async (
       isSale: product.isSale,
       sku: product.sku,
       keywords: product.keywords.join(","),
+      variantImage: product.variantImage,
       images: {
         create: product.images.map((image) => ({
           url: image.url,

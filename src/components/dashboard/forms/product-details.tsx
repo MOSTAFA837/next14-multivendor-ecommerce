@@ -95,6 +95,7 @@ export default function ProductDetails({
       variantName: data?.variantName,
       variantDescription: data?.variantDescription,
       images: data?.images || [],
+      variantImage: data?.variantImage ? [{ url: data.variantImage }] : [],
       categoryId: data?.categoryId,
       subCategoryId: data?.subCategoryId,
       brand: data?.brand,
@@ -109,7 +110,10 @@ export default function ProductDetails({
   // Reset form values when data changes
   useEffect(() => {
     if (data) {
-      form.reset(data);
+      form.reset({
+        ...data,
+        variantImage: data.variantImage ? [{ url: data.variantImage }] : [],
+      });
     }
   }, [data, form]);
 
@@ -145,6 +149,7 @@ export default function ProductDetails({
           variantName: values.variantName,
           variantDescription: values.variantDescription || "",
           images: values.images,
+          variantImage: values.variantImage[0].url,
           categoryId: values.categoryId,
           subCategoryId: values.subCategoryId,
           isSale: values.isSale,
@@ -465,6 +470,36 @@ export default function ProductDetails({
 
               {/* Variant image - Keywords*/}
               <div className="flex items-center gap-10 py-14">
+                {/* Variant image */}
+                <div className="border-r pr-10">
+                  <FormField
+                    control={form.control}
+                    name="variantImage"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="ml-14">Variant Image</FormLabel>
+                        <FormControl>
+                          <ImageUpload
+                            dontShowPreview
+                            type="profile"
+                            value={field.value.map((image) => image.url)}
+                            disabled={isLoading}
+                            onChange={(url) => field.onChange([{ url }])}
+                            onRemove={(url) =>
+                              field.onChange([
+                                ...field.value.filter(
+                                  (current) => current.url !== url
+                                ),
+                              ])
+                            }
+                          />
+                        </FormControl>
+                        <FormMessage className="!mt-4" />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
                 {/* Keywords */}
                 <div className="w-full flex-1 space-y-3">
                   <FormField
