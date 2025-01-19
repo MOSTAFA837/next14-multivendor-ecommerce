@@ -1,5 +1,4 @@
 import { Input } from "@/components/ui/input";
-import { cn } from "@/lib/utils";
 import { PaintBucket } from "lucide-react";
 import { Dispatch, SetStateAction, useState } from "react";
 import { SketchPicker } from "react-color";
@@ -12,7 +11,7 @@ interface ClickToAddInputsProps {
   details: Detail[];
   setDetails: Dispatch<SetStateAction<Detail[]>>;
   initialDetail?: Detail;
-  header: string;
+  header?: string;
   colorPicker?: boolean;
 }
 

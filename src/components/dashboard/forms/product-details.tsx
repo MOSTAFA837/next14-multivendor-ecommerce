@@ -94,6 +94,15 @@ export default function ProductDetails({
   const [sizes, setSizes] = useState<
     { size: string; price: number; quantity: number; discount: number }[]
   >(data?.sizes || [{ size: "", price: 0, quantity: 0, discount: 0 }]);
+  // State for product specs
+  const [productSpecs, setProductSpecs] = useState<
+    { name: string; value: string }[]
+  >(data?.product_specs || [{ name: "", value: "" }]);
+
+  // State for product variant specs
+  const [variantSpecs, setVariantSpecs] = useState<
+    { name: string; value: string }[]
+  >(data?.variant_specs || [{ name: "", value: "" }]);
 
   // Handle keywords input
   const [keywords, setKeywords] = useState<string[]>(data?.keywords || []);
@@ -128,6 +137,8 @@ export default function ProductDetails({
       sku: data?.sku || generateRandomSKU(),
       colors: data?.colors || [{ color: "" }],
       sizes: data?.sizes,
+      product_specs: data?.product_specs,
+      variant_specs: data?.variant_specs,
       keywords: data?.keywords,
       isSale: data?.isSale,
       saleEndDate:
@@ -160,7 +171,9 @@ export default function ProductDetails({
     form.setValue("colors", colors);
     form.setValue("sizes", sizes);
     form.setValue("keywords", keywords);
-  }, [colors, sizes, keywords, form]);
+    form.setValue("product_specs", productSpecs);
+    form.setValue("variant_specs", variantSpecs);
+  }, [colors, sizes, keywords, form, productSpecs, variantSpecs]);
 
   // extract errors and loading states from form
   const errors = form.formState.errors;
@@ -181,10 +194,13 @@ export default function ProductDetails({
           categoryId: values.categoryId,
           subCategoryId: values.subCategoryId,
           isSale: values.isSale,
+          saleEndDate: values.saleEndDate,
           brand: values.brand,
           sku: values.sku,
           colors: values.colors,
           sizes: values.sizes,
+          product_specs: values.product_specs,
+          variant_specs: values.variant_specs,
           keywords: values.keywords,
           createdAt: new Date(),
           updatedAt: new Date(),
@@ -212,6 +228,9 @@ export default function ProductDetails({
       });
     }
   };
+
+  console.log("product_specs", form.getValues().product_specs);
+  console.log("variant_specs", form.getValues().variant_specs);
 
   return (
     <AlertDialog>
@@ -519,6 +538,53 @@ export default function ProductDetails({
                     </span>
                   )}
                 </div>
+              </InputFieldset>
+
+              {/* Specifications*/}
+              <InputFieldset label="Specifications">
+                <Tabs className="w-full" defaultValue="productSpecs">
+                  <TabsList className="w-full grid grid-cols-2">
+                    <TabsTrigger value="productSpecs">
+                      Product Specifications
+                    </TabsTrigger>
+
+                    <TabsTrigger value="variantSpecs">
+                      Variant Specifications
+                    </TabsTrigger>
+                  </TabsList>
+
+                  <TabsContent value="productSpecs">
+                    <div className="w-full flex flex-col gap-y-3">
+                      <ClickToAddInputs
+                        details={productSpecs}
+                        setDetails={setProductSpecs}
+                        initialDetail={{ name: "", value: "" }}
+                      />
+
+                      {errors.product_specs && (
+                        <span className="text-sm font-medium text-destructive">
+                          {errors.product_specs.message}
+                        </span>
+                      )}
+                    </div>
+                  </TabsContent>
+
+                  <TabsContent value="variantSpecs">
+                    <div className="w-full flex flex-col gap-y-3">
+                      <ClickToAddInputs
+                        details={variantSpecs}
+                        setDetails={setVariantSpecs}
+                        initialDetail={{ name: "", value: "" }}
+                      />
+
+                      {errors.variant_specs && (
+                        <span className="text-sm font-medium text-destructive">
+                          {errors.variant_specs.message}
+                        </span>
+                      )}
+                    </div>
+                  </TabsContent>
+                </Tabs>
               </InputFieldset>
 
               {/* Variant image - Keywords*/}
