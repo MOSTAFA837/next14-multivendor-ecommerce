@@ -144,3 +144,56 @@ export const getProductMainInfo = async (productId: string) => {
     storeId: product.storeId,
   };
 };
+
+export const getAllStoreProducts = async (storeUrl: string) => {
+  // Retrieve store details from the database using the store URL
+  const store = await db.store.findUnique({ where: { url: storeUrl } });
+  if (!store) throw new Error("Please provide a valid store URL.");
+
+  // Retrieve all products associated with the store
+  const products = await db.product.findMany({
+    where: {
+      storeId: store.id,
+    },
+    include: {
+      category: true,
+      subCategory: true,
+      variants: {
+        include: {
+          images: true,
+          colors: true,
+          sizes: true,
+        },
+      },
+      store: {
+        select: {
+          id: true,
+          url: true,
+        },
+      },
+    },
+  });
+
+  return products;
+};
+
+export const deleteProduct = async (productId: string) => {
+  // Get current user
+  const user = await currentUser();
+
+  // Check if user is authenticated
+  if (!user) throw new Error("Unauthenticated.");
+
+  // Ensure user has seller privileges
+  if (user.privateMetadata.role !== "SELLER")
+    throw new Error(
+      "Unauthorized Access: Seller Privileges Required for Entry."
+    );
+
+  // Ensure product data is provided
+  if (!productId) throw new Error("Please provide product id.");
+
+  // Delete product from the database
+  const response = await db.product.delete({ where: { id: productId } });
+  return response;
+};
