@@ -9,7 +9,7 @@ export const CategoryFormSchema = z.object({
     })
     .min(2, { message: "Category name must be at least 2 characters long." })
     .max(50, { message: "Category name cannot exceed 50 characters." })
-    .regex(/^[a-zA-Z0-9\s\-&]+$/, {
+    .regex(/^[a-zA-Z0-9\s]+$/, {
       message:
         "Only letters, numbers, and spaces are allowed in the category name.",
     }),
@@ -33,7 +33,7 @@ export const SubCategoryFormSchema = z.object({
     .max(50, { message: "SubCategory name cannot exceed 50 characters." })
     .regex(/^[a-zA-Z0-9\s\-&]+$/, {
       message:
-        "Only letters, numbers, and spaces are allowed in the subCategory name.",
+        "Only letters, numbers, spaces and (-, &) are allowed in the subCategory name.",
     }),
   image: z
     .object({ url: z.string() })
@@ -82,19 +82,34 @@ export const StoreFormSchema = z.object({
     .object({ url: z.string() })
     .array()
     .length(1, "Choose a cover image."),
-  url: z
-    .string({
-      required_error: "Store url is required",
-      invalid_type_error: "Store url must be a string",
-    })
-    .min(2, { message: "Store url must be at least 2 characters long." })
-    .max(50, { message: "Store url cannot exceed 50 characters." })
-    .regex(/^(?!.*(?:[-_ ]){2,})[a-zA-Z0-9_-]+$/, {
-      message:
-        "Only letters, numbers, hyphen, and underscore are allowed in the store url, and consecutive occurrences of hyphens, underscores, or spaces are not permitted.",
-    }),
   featured: z.boolean().default(false).optional(),
   status: z.string().default("PENDING").optional(),
+});
+
+// OfferTag form schema
+export const OfferTagFormSchema = z.object({
+  name: z
+    .string({
+      required_error: "Category name is required.",
+      invalid_type_error: "Category nale must be a string.",
+    })
+    .min(2, { message: "Category name must be at least 2 characters long." })
+    .max(50, { message: "Category name cannot exceed 50 characters." })
+    .regex(/^[a-zA-Z0-9\s&$.%,']+$/, {
+      message:
+        "Only letters, numbers, and spaces are allowed in the category name.",
+    }),
+  // url: z
+  //   .string({
+  //     required_error: "Category url is required",
+  //     invalid_type_error: "Category url must be a string",
+  //   })
+  //   .min(2, { message: "Category url must be at least 2 characters long." })
+  //   .max(50, { message: "Category url cannot exceed 50 characters." })
+  //   .regex(/^(?!.*(?:[-_ ]){2,})[a-zA-Z0-9_-]+$/, {
+  //     message:
+  //       "Only letters, numbers, hyphen, and underscore are allowed in the category url, and consecutive occurrences of hyphens, underscores, or spaces are not permitted.",
+  //   }),
 });
 
 // Product schema
@@ -110,14 +125,15 @@ export const ProductFormSchema = z.object({
       message:
         "Product name may only contain letters, numbers, spaces, hyphens, and underscores, without consecutive special characters.",
     }),
-  // description: z
-  //   .string({
-  //     required_error: "Product description is mandatory.",
-  //     invalid_type_error: "Product description must be a valid string.",
-  //   })
-  //   .min(30, {
-  //     message: "Product description should be at least 30 characters long.",
-  //   }),
+  description: z
+    .string({
+      required_error: "Product description is mandatory.",
+      invalid_type_error: "Product description must be a valid string.",
+    })
+    .min(30, {
+      message: "Product description should be at least 30 characters long.",
+    })
+    .max(800, { message: "Product description cannot exceed 800 characters." }),
   variantName: z
     .string({
       required_error: "Product variant name is mandatory.",
@@ -131,21 +147,31 @@ export const ProductFormSchema = z.object({
       message:
         "Product variant name may only contain letters, numbers, spaces, hyphens, and underscores, without consecutive special characters.",
     }),
-  // variantDescription: z
-  //   .string({
-  //     required_error: "Product variant description is mandatory.",
-  //     invalid_type_error: "Product variant description must be a valid string.",
-  //   })
-  //   .optional(),
+  variantDescription: z
+    .string({
+      required_error: "Product variant description is mandatory.",
+      invalid_type_error: "Product variant description must be a valid string.",
+    })
+    .min(30, {
+      message:
+        "Product variant description should be at least 30 characters long.",
+    })
+    .max(500, {
+      message: "Product variant description cannot exceed 500 characters.",
+    })
+    .optional(),
+  offerTagId: z
+    .string({
+      required_error: "Product offer tag ID is mandatory.",
+      invalid_type_error: "Product offer tag ID must be a valid UUID.",
+    })
+    .uuid()
+    .optional(),
   images: z
     .object({ url: z.string() })
     .array()
-    .min(3, "Please upload at least 3 images for the product.")
+    .min(1, "Please upload at least 3 images for the product.")
     .max(6, "You can upload up to 6 images for the product."),
-  // variantImage: z
-  //   .object({ url: z.string() })
-  //   .array()
-  //   .length(1, "Choose a product variant image."),
   categoryId: z
     .string({
       required_error: "Product category ID is mandatory.",
@@ -158,13 +184,6 @@ export const ProductFormSchema = z.object({
       invalid_type_error: "Product sub-category ID must be a valid UUID.",
     })
     .uuid(),
-  offerTagId: z
-    .string({
-      required_error: "Product offer tag ID is mandatory.",
-      invalid_type_error: "Product offer tag ID must be a valid UUID.",
-    })
-    .uuid()
-    .optional(),
   isSale: z.boolean().default(false),
   saleEndDate: z.string().optional(),
   brand: z
@@ -201,6 +220,9 @@ export const ProductFormSchema = z.object({
     .max(10, {
       message: "You can provide up to 10 keywords.",
     }),
+  weight: z.number().min(0.01, {
+    message: "Please provide a valid product weight.",
+  }),
   colors: z
     .object({ color: z.string() })
     .array()
@@ -235,11 +257,9 @@ export const ProductFormSchema = z.object({
     .min(1, "Please provide at least one product spec.")
     .refine(
       (product_specs) =>
-        product_specs.every(
-          (spec) => spec.name.length > 0 && spec.value.length > 0
-        ),
+        product_specs.every((s) => s.name.length > 0 && s.value.length > 0),
       {
-        message: "All product spec inputs must be filled correctly.",
+        message: "All product specs inputs must be filled correctly.",
       }
     ),
   variant_specs: z
@@ -251,9 +271,7 @@ export const ProductFormSchema = z.object({
     .min(1, "Please provide at least one product variant spec.")
     .refine(
       (product_specs) =>
-        product_specs.every(
-          (spec) => spec.name.length > 0 && spec.value.length > 0
-        ),
+        product_specs.every((s) => s.name.length > 0 && s.value.length > 0),
       {
         message: "All product variant specs inputs must be filled correctly.",
       }
@@ -272,19 +290,4 @@ export const ProductFormSchema = z.object({
         message: "All product question inputs must be filled correctly.",
       }
     ),
-});
-
-// OfferTag form schema
-export const OfferTagFormSchema = z.object({
-  name: z
-    .string({
-      required_error: "Category name is required.",
-      invalid_type_error: "Category nale must be a string.",
-    })
-    .min(2, { message: "Category name must be at least 2 characters long." })
-    .max(50, { message: "Category name cannot exceed 50 characters." })
-    .regex(/^[a-zA-Z0-9\s&$.%,']+$/, {
-      message:
-        "Only letters, numbers, and spaces are allowed in the category name.",
-    }),
 });

@@ -41,6 +41,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 // Queries
 import { upsertProduct } from "@/queries/product";
+import { getSubCategoriesForCategory } from "@/queries/subCategory";
 
 // ReactTags
 import { WithOutContext as ReactTags } from "react-tag-input";
@@ -66,17 +67,14 @@ import "react-datetime-picker/dist/DateTimePicker.css";
 import "react-calendar/dist/Calendar.css";
 import "react-clock/dist/Clock.css";
 import { format } from "date-fns";
-// import dynamic from "next/dynamic";
 
 // Jodit text editor
-// const JoditEditor = dynamic(() => import("jodit-react"), {
-//   ssr: false,
-// });
-
+import JoditEditor from "jodit-react";
+import { MultiSelect, NumberInput } from "@tremor/react";
 import InputFieldset from "../shared/input-fieldset";
 import { ArrowRight, Dot } from "lucide-react";
 import { useTheme } from "next-themes";
-import { getSubCategoriesForCategory } from "@/queries/subCategory";
+import { generateRandomSKU } from "@/lib/utils";
 
 interface ProductDetailsProps {
   data?: Partial<ProductWithVariantType>;
@@ -99,8 +97,8 @@ const ProductDetails: FC<ProductDetailsProps> = ({
   const isNewVariantPage = data?.productId && !data?.variantId;
 
   // Jodit editor refs
-  // const productDescEditor = useRef(null);
-  // const variantDescEditor = useRef(null);
+  const productDescEditor = useRef(null);
+  const variantDescEditor = useRef(null);
 
   // Jodit configuration
   const { theme } = useTheme();
@@ -150,16 +148,15 @@ const ProductDetails: FC<ProductDetailsProps> = ({
     defaultValues: {
       // Setting default form values from data (if available)
       name: data?.name,
-      // description: data?.description,
+      description: data?.description,
       variantName: data?.variantName,
-      // variantDescription: data?.variantDescription,
+      variantDescription: data?.variantDescription,
       images: data?.images || [],
-      // variantImage: data?.variantImage ? [{ url: data.variantImage }] : [],
       categoryId: data?.categoryId,
       offerTagId: data?.offerTagId,
       subCategoryId: data?.subCategoryId,
       brand: data?.brand,
-      sku: data?.sku,
+      sku: generateRandomSKU(),
       colors: data?.colors,
       sizes: data?.sizes,
       product_specs: data?.product_specs,
@@ -167,6 +164,7 @@ const ProductDetails: FC<ProductDetailsProps> = ({
       keywords: data?.keywords,
       questions: data?.questions,
       isSale: data?.isSale || false,
+      weight: data?.weight,
       saleEndDate:
         data?.saleEndDate || format(new Date(), "yyyy-MM-dd'T'HH:mm:ss"),
     },
@@ -209,19 +207,17 @@ const ProductDetails: FC<ProductDetailsProps> = ({
 
   // Submit handler for form submission
   const handleSubmit = async (values: z.infer<typeof ProductFormSchema>) => {
-    console.log(values);
     try {
       // Upserting product data
-      const response = await upsertProduct(
+      await upsertProduct(
         {
           productId: data?.productId ? data.productId : v4(),
           variantId: data?.variantId ? data.variantId : v4(),
           name: values.name,
-          // description: values.description,
+          description: values.description,
           variantName: values.variantName,
-          // variantDescription: values.variantDescription || "",
+          variantDescription: values.variantDescription || "",
           images: values.images,
-          // variantImage: values.variantImage[0].url,
           categoryId: values.categoryId,
           subCategoryId: values.subCategoryId,
           offerTagId: values.offerTagId || "",
@@ -229,6 +225,7 @@ const ProductDetails: FC<ProductDetailsProps> = ({
           saleEndDate: values.saleEndDate,
           brand: values.brand,
           sku: values.sku,
+          weight: values.weight,
           colors: values.colors,
           sizes: values.sizes,
           product_specs: values.product_specs,
@@ -300,6 +297,12 @@ const ProductDetails: FC<ProductDetailsProps> = ({
     data,
     form,
   ]);
+
+  //Countries options
+  type CountryOption = {
+    label: string;
+    value: string;
+  };
 
   return (
     <AlertDialog>
@@ -422,7 +425,7 @@ const ProductDetails: FC<ProductDetailsProps> = ({
               </InputFieldset>
 
               {/* Product and variant description editors (tabs) */}
-              {/* <InputFieldset
+              <InputFieldset
                 label="Description"
                 description={
                   isNewVariantPage
@@ -489,7 +492,7 @@ const ProductDetails: FC<ProductDetailsProps> = ({
                     />
                   </TabsContent>
                 </Tabs>
-              </InputFieldset> */}
+              </InputFieldset>
 
               {/* Category - SubCategory - offer*/}
               {!isNewVariantPage && (
@@ -637,42 +640,31 @@ const ProductDetails: FC<ProductDetailsProps> = ({
                       </FormItem>
                     )}
                   />
-                </div>
-              </InputFieldset>
-
-              {/* Variant image - Keywords*/}
-              <div className="flex items-center gap-10 py-14">
-                {/* Variant image */}
-                {/* <div className="border-r pr-10">
                   <FormField
+                    disabled={isLoading}
                     control={form.control}
-                    name="variantImage"
+                    name="weight"
                     render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="ml-14">Variant Image</FormLabel>
+                      <FormItem className="flex-1">
                         <FormControl>
-                          <ImageUpload
-                            dontShowPreview
-                            type="profile"
-                            value={field.value.map((image) => image.url)}
-                            disabled={isLoading}
-                            onChange={(url) => field.onChange([{ url }])}
-                            onRemove={(url) =>
-                              field.onChange([
-                                ...field.value.filter(
-                                  (current) => current.url !== url
-                                ),
-                              ])
-                            }
+                          <NumberInput
+                            defaultValue={field.value}
+                            onValueChange={field.onChange}
+                            placeholder="Product weight"
+                            min={0.01}
+                            step={0.01}
+                            className="!shadow-none rounded-md !text-sm"
                           />
                         </FormControl>
-                        <FormMessage className="!mt-4" />
+                        <FormMessage />
                       </FormItem>
                     )}
                   />
-                </div> */}
+                </div>
+              </InputFieldset>
 
-                {/* Keywords */}
+              {/* Keywords*/}
+              <div className="flex items-center gap-10 py-14">
                 <div className="w-full flex-1 space-y-3">
                   <FormField
                     control={form.control}
@@ -909,6 +901,10 @@ const ProductDetails: FC<ProductDetailsProps> = ({
                   )}
                 </div>
               </InputFieldset>
+
+              {/* Shipping fee method */}
+
+              {/* Fee Shipping */}
 
               <Button type="submit" disabled={isLoading}>
                 {isLoading

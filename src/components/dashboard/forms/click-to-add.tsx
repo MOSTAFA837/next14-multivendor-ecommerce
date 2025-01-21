@@ -1,48 +1,46 @@
-import { Input } from "@/components/ui/input";
-import { cn } from "@/lib/utils";
-import { PaintBucket } from "lucide-react";
-import { Dispatch, SetStateAction, useState } from "react";
-import { SketchPicker } from "react-color";
+// React, Next.js
+import React, { FC, useState } from "react";
 
-export interface Detail {
-  [key: string]: string | number | undefined;
+// UI Components
+import { Input } from "@/components/ui/input";
+
+// Icons
+import { PaintBucket } from "lucide-react";
+
+// Color picker
+import { SketchPicker } from "react-color";
+import { cn } from "@/lib/utils";
+
+// Define the interface for each detail object
+export interface Detail<T = { [key: string]: string | number | undefined }> {
+  [key: string]: T[keyof T];
 }
 
-interface ClickToAddInputsProps {
-  details: Detail[];
-  setDetails: Dispatch<SetStateAction<Detail[]>>;
-  initialDetail?: Detail;
-  header?: string;
-  colorPicker?: boolean;
+// Define props for the ClickToAddInputs component
+interface ClickToAddInputsProps<T extends Detail> {
+  details: T[]; // Array of detail objects
+  setDetails: React.Dispatch<React.SetStateAction<T[]>>; // Setter function for details
+  initialDetail?: T; // Optional initial detail object
+  header?: string; // Header text for the component
+  colorPicker?: boolean; // Is color picker needed
   containerClassName?: string;
   inputClassName?: string;
 }
 
-export default function ClickToAddInputs({
+// ClickToAddInputs component definition
+const ClickToAddInputs = <T extends Detail>({
   details,
   setDetails,
-  initialDetail = {},
   header,
+  initialDetail = {} as T, // Default value for initialDetail is an empty object
   colorPicker,
   containerClassName,
   inputClassName,
-}: ClickToAddInputsProps) {
+}: ClickToAddInputsProps<T>) => {
+  // State to manage toggling color picker
   const [colorPickerIndex, setColorPickerIndex] = useState<number | null>(null);
 
-  // Add a new detail
-  const handleAddDetail = () => {
-    setDetails([...details, { ...initialDetail }]);
-  };
-
-  const handleRemove = (index: number) => {
-    if (details.length === 1) return;
-
-    const updateddetails = details.filter((_, i) => i !== index);
-
-    setDetails(updateddetails);
-  };
-
-  // Handle changes in detail properties
+  // Function to handle changes in detail properties
   const handleDetailsChange = (
     index: number,
     property: string,
@@ -52,9 +50,30 @@ export default function ClickToAddInputs({
     const updatedDetails = details.map((detail, i) =>
       i === index ? { ...detail, [property]: value } : detail
     );
-    setDetails(updatedDetails);
+    setDetails(updatedDetails); // Update the state with the modified details
   };
 
+  // Function to add a new detail
+  const handleAddDetail = () => {
+    // Add a new detail object to the details array
+    setDetails([
+      ...details,
+      {
+        ...initialDetail, // Spread the initialDetail object to set initial values
+      },
+    ]);
+  };
+
+  // Function to handle removal of a detail
+  const handleRemove = (index: number) => {
+    // We must atleast keep one detail we can't delete if it's the only detail available
+    if (details.length === 1) return;
+    // Filter out the detail at the specified index
+    const updatedDetails = details.filter((_, i) => i !== index);
+    setDetails(updatedDetails); // Update the state with the filtered details
+  };
+
+  // PlusButton component for adding new details
   const PlusButton = ({ onClick }: { onClick: () => void }) => {
     return (
       <button
@@ -82,6 +101,7 @@ export default function ClickToAddInputs({
     );
   };
 
+  // MinusButton component for removing details
   const MinusButton = ({ onClick }: { onClick: () => void }) => {
     return (
       <button
@@ -107,25 +127,26 @@ export default function ClickToAddInputs({
       </button>
     );
   };
-
   return (
     <div className="flex flex-col gap-y-4">
+      {/* Header */}
       {header && <div>{header}</div>}
-
+      {/* Display PlusButton if no details exist */}
       {details.length === 0 && <PlusButton onClick={handleAddDetail} />}
-
+      {/* Map through details and render input fields */}
       {details.map((detail, index) => (
         <div key={index} className="flex items-center gap-x-4">
-          {Object.keys(detail).map((property, propertyIndex) => (
+          {Object.keys(detail).map((property, propIndex) => (
             <div
+              key={propIndex}
               className={cn("flex items-center gap-x-4", containerClassName)}
-              key={propertyIndex}
             >
+              {/* Color picker toggle */}
               {property === "color" && colorPicker && (
                 <div className="flex gap-x-4">
                   <button
                     type="button"
-                    className="w-8 h-8"
+                    className="cursor-pointer"
                     onClick={() =>
                       setColorPickerIndex(
                         colorPickerIndex === index ? null : index
@@ -134,7 +155,6 @@ export default function ClickToAddInputs({
                   >
                     <PaintBucket />
                   </button>
-
                   <span
                     className="w-8 h-8 rounded-full"
                     style={{ backgroundColor: detail[property] as string }}
@@ -150,6 +170,7 @@ export default function ClickToAddInputs({
                 />
               )}
 
+              {/* Input field for each property */}
               <Input
                 className={cn("w-28 placeholder:capitalize", inputClassName)}
                 type={typeof detail[property] === "number" ? "number" : "text"}
@@ -158,25 +179,25 @@ export default function ClickToAddInputs({
                 value={detail[property] as string}
                 min={typeof detail[property] === "number" ? 0 : undefined}
                 step="0.01"
-                onChange={(e) => {
+                onChange={(e) =>
                   handleDetailsChange(
                     index,
                     property,
                     e.target.type === "number"
                       ? parseFloat(e.target.value)
                       : e.target.value
-                  );
-                }}
+                  )
+                }
               />
             </div>
           ))}
-
-          {details.length > 1 && (
-            <MinusButton onClick={() => handleRemove(index)} />
-          )}
+          {/* Show buttons for each row of inputs */}
+          <MinusButton onClick={() => handleRemove(index)} />
           <PlusButton onClick={handleAddDetail} />
         </div>
       ))}
     </div>
   );
-}
+};
+
+export default ClickToAddInputs;

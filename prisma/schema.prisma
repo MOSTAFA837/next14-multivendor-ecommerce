@@ -94,10 +94,13 @@ model Store {
 model Product {
   id            String           @id @default(uuid())
   name          String
-  // description   String           @db.LongText
+  description   String            @db.LongText
   slug          String           @unique
   brand         String
   rating        Float            @default(0)
+  sales             Int               @default(0)
+  numReviews        Int               @default(0)
+  views  Int @default(0)
   createdAt     DateTime         @default(now())
   updatedAt     DateTime         @default(now()) @updatedAt
   storeId       String
@@ -107,10 +110,13 @@ model Product {
   category      Category         @relation("CategoryToProduct", fields: [categoryId], references: [id])
   subCategoryId String
   subCategory   SubCategory      @relation("SubCategoryToProduct", fields: [subCategoryId], references: [id])
-  specs         Spec[]           @relation("ProductSpec")
-  questions     Question[]       @relation("ProductQuestion")
-  offerTagId    String
-  offerTag      OfferTag @relation("OfferTagToProduct", fields: [offerTagId], references: [id])
+
+  offerTagId String?
+  offerTag   OfferTag? @relation("OfferTagToProduct", fields: [offerTagId], references: [id])
+
+
+  specs     Spec[]           @relation("ProductSpec")
+    questions Question[]       @relation("ProductQuestion")
 
   @@index([storeId])
   @@index([categoryId])
@@ -121,13 +127,13 @@ model Product {
 model ProductVariant {
   id                 String                @id @default(uuid())
   variantName        String
-  // variantDescription String?               @db.LongText
-  // variantImage       String
+  variantDescription String? @db.LongText
   slug               String                @unique
   isSale             Boolean               @default(false)
   saleEndDate        String?
   keywords           String
   sku                String
+  weight             Float        
   productId          String
   product            Product               @relation("ProductToProductVariant", fields: [productId], references: [id])
   sizes              Size[]                @relation("ProductVariantSizes")
@@ -135,7 +141,8 @@ model ProductVariant {
   colors             Color[]               @relation("ProductVariantColors")
   createdAt          DateTime              @default(now())
   updatedAt          DateTime              @default(now()) @updatedAt
-  specs              Spec[]                @relation("ProductVariantSpec")
+
+  specs    Spec[]                @relation("ProductVariantSpec")
 
   @@index([productId])
 }
@@ -150,6 +157,17 @@ model ProductVariantImage {
   updatedAt        DateTime       @default(now()) @updatedAt
 
   @@index([productVariantId])
+}
+
+model OfferTag {
+  id   String @id @default(uuid())
+  name String
+  url  String  @unique
+
+  products Product[] @relation("OfferTagToProduct")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
 }
 
 model Size {
@@ -178,37 +196,34 @@ model Color {
 }
 
 model Spec {
-  id        String          @id @default(uuid())
-  name      String
-  value     String
+  id    String @id @default(uuid())
+  name  String
+  value String
+
   productId String?
-  product   Product?        @relation("ProductSpec", fields: [productId], references: [id], onDelete: Cascade)
+  product   Product? @relation("ProductSpec", fields: [productId], references: [id], onDelete: Cascade)
+
   variantId String?
   variant   ProductVariant? @relation("ProductVariantSpec", fields: [variantId], references: [id], onDelete: Cascade)
-  createdAt DateTime        @default(now())
-  updatedAt DateTime        @default(now()) @updatedAt
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
 
   @@index([productId])
   @@index([variantId])
 }
 
 model Question {
-  id        String   @id @default(uuid())
-  question  String
-  answer    String
+  id String @id @default(uuid())
+
+  question String
+  answer   String
+
   productId String
-  product   Product  @relation("ProductQuestion", fields: [productId], references: [id], onDelete: Cascade)
+  product   Product @relation("ProductQuestion", fields: [productId], references: [id], onDelete: Cascade)
+
   createdAt DateTime @default(now())
   updatedAt DateTime @default(now()) @updatedAt
 
   @@index([productId])
-}
-
-model OfferTag {
-  id        String @id @default(uuid())
-  name      String
-  url       String
-  products  Product[] @relation("OfferTagToProduct")
-  createdAt DateTime @default(now())
-  updatedAt DateTime @default(now()) @updatedAt
 }

@@ -17,28 +17,29 @@ export type ProductWithVariantType = {
   productId: string;
   variantId: string;
   name: string;
-  // description: string;
+  description: string;
   variantName: string;
-  // variantDescription: string;
+  variantDescription: string;
   images: { id?: string; url: string }[];
-  // variantImage: string;
   categoryId: string;
-  offerTagId: string;
   subCategoryId: string;
   isSale: boolean;
   saleEndDate?: string;
+  offerTagId: string;
   brand: string;
   sku: string;
+  weight: number;
   colors: { color: string }[];
   sizes: { size: string; quantity: number; price: number; discount: number }[];
-  product_specs: { name: string; value: string }[];
-  variant_specs: { name: string; value: string }[];
-  questions: { id?: string; question: string; answer: string }[];
   keywords: string[];
+  product_specs: { id?: string; name: string; value: string }[];
+  variant_specs: { id?: string; name: string; value: string }[];
+  questions: { id?: string; question: string; answer: string }[];
   createdAt: Date;
   updatedAt: Date;
 };
 
+// Store product
 export type StoreProductType = Prisma.PromiseReturnType<
   typeof getAllStoreProducts
 >[0];

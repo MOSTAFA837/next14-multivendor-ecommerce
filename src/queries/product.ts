@@ -1,21 +1,11 @@
 "use server";
-
-// DB
 import { db } from "@/lib/db";
-
-// Types
 import { ProductWithVariantType } from "@/lib/types";
-import { ProductVariant, Size, Store } from "@prisma/client";
-
-// Clerk
-import { currentUser } from "@clerk/nextjs/server";
-
-// Slugify
-import slugify from "slugify";
 import { generateUniqueSlug } from "@/lib/utils";
 
-// Cookies
-import { cookies } from "next/headers";
+import { currentUser } from "@clerk/nextjs/server";
+
+import slugify from "slugify";
 
 export const upsertProduct = async (
   product: ProductWithVariantType,
@@ -55,15 +45,18 @@ export const upsertProduct = async (
 
     if (existingProduct) {
       if (existingVariant) {
-        // Update existing variant and product
-      } else {
         // Create new variant
-        console.log("handleCreateVariant");
         await handleCreateVariant(product);
+      } else {
+        try {
+          // Create new variant
+          await handleCreateVariant(product);
+        } catch (error) {
+          console.log(error);
+        }
       }
     } else {
       // Create new product and variant
-      console.log("handleProductCreate");
       await handleProductCreate(product, store.id);
     }
   } catch (error) {
@@ -97,12 +90,11 @@ const handleProductCreate = async (
   const productData = {
     id: product.productId,
     name: product.name,
-    // description: product.description,
+    description: product.description,
     slug: productSlug,
     store: { connect: { id: storeId } },
     category: { connect: { id: product.categoryId } },
     subCategory: { connect: { id: product.subCategoryId } },
-    offerTag: { connect: { id: product.offerTagId } },
     brand: product.brand,
     specs: {
       create: product.product_specs.map((spec) => ({
@@ -121,10 +113,10 @@ const handleProductCreate = async (
         {
           id: product.variantId,
           variantName: product.variantName,
-          // variantDescription: product.variantDescription,
+          variantDescription: product.variantDescription,
           slug: variantSlug,
-          // variantImage: product.variantImage,
           sku: product.sku,
+          weight: product.weight,
           keywords: product.keywords.join(","),
           isSale: product.isSale,
           saleEndDate: product.saleEndDate,
@@ -175,17 +167,19 @@ const handleCreateVariant = async (product: ProductWithVariantType) => {
     "productVariant"
   );
 
+  console.log(product);
+
   const variantData = {
     id: product.variantId,
-    productId: product.productId,
     variantName: product.variantName,
-    // variantDescription: product.variantDescription,
+    variantDescription: product.variantDescription,
     slug: variantSlug,
     isSale: product.isSale,
-    saleEndDate: product.isSale ? product.saleEndDate : "",
-    sku: product.sku,
+    saleEndDate: product.saleEndDate,
     keywords: product.keywords.join(","),
-    // variantImage: product.variantImage,
+    sku: product.sku,
+    weight: product.weight,
+    productId: product.productId,
     images: {
       create: product.images.map((img) => ({
         url: img.url,
@@ -218,13 +212,39 @@ const handleCreateVariant = async (product: ProductWithVariantType) => {
   return new_variant;
 };
 
-// Function: getProductVariant
-// Description: Retrieves details of a specific product variant from the database.
-// Access Level: Public
-// Parameters:
-//   - productId: The id of the product to which the variant belongs.
-//   - variantId: The id of the variant to be retrieved.
-// Returns: Details of the requested product variant.
+export const getProductMainInfo = async (productId: string) => {
+  // Retrieve the product from the database
+  const product = await db.product.findUnique({
+    where: {
+      id: productId,
+    },
+    include: {
+      questions: true,
+      specs: true,
+    },
+  });
+  if (!product) return null;
+
+  // Return the main information of the product
+  return {
+    productId: product.id,
+    name: product.name,
+    description: product.description,
+    brand: product.brand,
+    categoryId: product.categoryId,
+    subCategoryId: product.subCategoryId,
+    storeId: product.storeId,
+    questions: product.questions.map((q) => ({
+      question: q.question,
+      answer: q.answer,
+    })),
+    product_specs: product.specs.map((spec) => ({
+      name: spec.name,
+      value: spec.value,
+    })),
+  };
+};
+
 export const getProductVariant = async (
   productId: string,
   variantId: string
@@ -265,9 +285,9 @@ export const getProductVariant = async (
     productId: product?.id,
     variantId: product?.variants[0].id,
     name: product.name,
-    // description: product?.description,
+    description: product?.description,
     variantName: product.variants[0].variantName,
-    // variantDescription: product.variants[0].variantDescription,
+    variantDescription: product.variants[0].variantDescription,
     images: product.variants[0].images,
     categoryId: product.categoryId,
     subCategoryId: product.subCategoryId,
@@ -277,46 +297,6 @@ export const getProductVariant = async (
     colors: product.variants[0].colors,
     sizes: product.variants[0].sizes,
     keywords: product.variants[0].keywords.split(","),
-  };
-};
-
-// Function: getProductMainInfo
-// Description: Retrieves the main information of a specific product from the database.
-// Access Level: Public
-// Parameters:
-//   - productId: The ID of the product to be retrieved.
-// Returns: An object containing the main information of the product or null if the product is not found.
-export const getProductMainInfo = async (productId: string) => {
-  // Retrieve the product from the database
-  const product = await db.product.findUnique({
-    where: {
-      id: productId,
-    },
-    include: {
-      questions: true,
-      specs: true,
-    },
-  });
-  if (!product) return null;
-
-  // Return the main information of the product
-  return {
-    productId: product.id,
-    name: product.name,
-    // description: product.description,
-    brand: product.brand,
-    categoryId: product.categoryId,
-    subCategoryId: product.subCategoryId,
-    offerTagId: product.offerTagId || undefined,
-    storeId: product.storeId,
-    questions: product.questions.map((q) => ({
-      question: q.question,
-      answer: q.answer,
-    })),
-    product_specs: product.specs.map((spec) => ({
-      name: spec.name,
-      value: spec.value,
-    })),
   };
 };
 
@@ -353,12 +333,6 @@ export const getAllStoreProducts = async (storeUrl: string) => {
   return products;
 };
 
-// Function: deleteProduct
-// Description: Deletes a product from the database.
-// Permission Level: Seller only
-// Parameters:
-//   - productId: The ID of the product to be deleted.
-// Returns: Response indicating success or failure of the deletion operation.
 export const deleteProduct = async (productId: string) => {
   // Get current user
   const user = await currentUser();
