@@ -1,4 +1,6 @@
+import { seedCountries } from "@/scripts/seed-countries";
+
 export default async function Home() {
-  // await updateVariantImage();
-  return <div></div>;
+  await seedCountries();
+  return <div>Div</div>;
 }

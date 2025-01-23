@@ -1,8 +1,9 @@
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 import ColorThief from "colorthief";
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient, Role } from "@prisma/client";
 import { db } from "./db";
+import { currentUser } from "@clerk/nextjs/server";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
