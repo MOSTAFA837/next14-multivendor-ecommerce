@@ -1,7 +1,7 @@
 import { getAllStoreProducts } from "@/queries/product";
 import { getStoreShippingDetails } from "@/queries/store";
 import { getAllSubCategories } from "@/queries/subCategory";
-import { Prisma, ShippingRate } from "@prisma/client";
+import { Category, Prisma, ShippingRate, SubCategory } from "@prisma/client";
 
 import countries from "@/data/countries.json";
 
@@ -63,5 +63,9 @@ export interface Country {
   city: string;
   region: string;
 }
+
+export type CategoryWithSubCategories = Category & {
+  subCategories: SubCategory[];
+};
 
 export type SelectMenuOption = (typeof countries)[number];

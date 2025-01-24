@@ -58,17 +58,14 @@ export const upsertCategory = async (category: Category) => {
 };
 
 export const getAllCategories = () => {
-  try {
-    const categories = db.category.findMany({
-      orderBy: {
-        updatedAt: "desc",
-      },
-    });
+  const categories = db.category.findMany({
+    orderBy: {
+      updatedAt: "desc",
+    },
+    include: { subCategories: true },
+  });
 
-    return categories;
-  } catch (error) {
-    console.log(error);
-  }
+  return categories;
 };
 
 export const getCategory = async (categoryId: string) => {
@@ -108,4 +105,17 @@ export const deleteCategory = async (categoryId: string) => {
     },
   });
   return response;
+};
+
+export const getCategoriesWithSubCategories = async (categoryId: string) => {
+  const categories = db.category.findMany({
+    where: {
+      id: categoryId,
+    },
+    include: {
+      subCategories: true,
+    },
+  });
+
+  return categories;
 };
