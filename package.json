@@ -50,6 +50,8 @@
     "cookies-next": "^5.1.0",
     "date-fns": "^4.1.0",
     "embla-carousel-react": "^8.5.2",
+    "flag-icons": "^7.3.2",
+    "framer-motion": "^12.0.3",
     "input-otp": "^1.4.2",
     "jodit-react": "^5.0.9",
     "lucide-react": "^0.473.0",
