@@ -1,6 +1,10 @@
 "use server";
 import { db } from "@/lib/db";
-import { ProductWithVariantType } from "@/lib/types";
+import {
+  ProductWithVariantType,
+  VariantImageType,
+  VariantSimplified,
+} from "@/lib/types";
 import { generateUniqueSlug } from "@/lib/utils";
 
 import { currentUser } from "@clerk/nextjs/server";
@@ -352,4 +356,77 @@ export const deleteProduct = async (productId: string) => {
   // Delete product from the database
   const response = await db.product.delete({ where: { id: productId } });
   return response;
+};
+
+export const getProducts = async (
+  filters: any = {},
+  sortBy = "",
+  page: number = 1,
+  pageSize: number = 10
+) => {
+  const currentPage = page;
+  const limit = pageSize;
+  const skip = (currentPage - 1) * limit;
+
+  const whereClause: any = {
+    AND: [],
+  };
+
+  const products = await db.product.findMany({
+    where: whereClause,
+    take: limit,
+    skip: skip,
+    include: {
+      variants: {
+        include: {
+          images: true,
+          colors: true,
+          sizes: true,
+        },
+      },
+    },
+  });
+
+  const productWithFilteredVariants = products.map((product) => {
+    // Filter the variants based on the filters
+    const filteredVariants = product.variants;
+
+    // Transform the filtered variants into the VariantSimplified structure
+    const variants: VariantSimplified[] = filteredVariants.map((variant) => ({
+      variantId: variant.id,
+      variantSlug: variant.slug,
+      variantName: variant.variantName,
+      images: variant.images,
+      sizes: variant.sizes,
+    }));
+
+    const variantImages: VariantImageType[] = filteredVariants.map(
+      (variant) => ({
+        url: `/product/${product.slug}/${variant.slug}`,
+        image: variant.images[0].url,
+      })
+    );
+
+    return {
+      id: product.id,
+      slug: product.slug,
+      name: product.name,
+      rating: product.rating,
+      sales: product.sales,
+      numReviews: product.numReviews,
+      variants,
+      variantImages,
+    };
+  });
+
+  const totalCount = products.length;
+  const totalPages = Math.ceil(totalCount / pageSize);
+
+  return {
+    products: productWithFilteredVariants,
+    totalCount,
+    totalPages,
+    currentPage,
+    pageSize,
+  };
 };
