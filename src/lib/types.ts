@@ -1,4 +1,9 @@
-import { getAllStoreProducts, getProducts } from "@/queries/product";
+import {
+  getAllStoreProducts,
+  getProductPageData,
+  getProducts,
+  retrieveProductDetails,
+} from "@/queries/product";
 import { getStoreShippingDetails } from "@/queries/store";
 import { getAllSubCategories } from "@/queries/subCategory";
 import {
@@ -7,6 +12,7 @@ import {
   ProductVariantImage,
   ShippingRate,
   Size,
+  Spec,
   SubCategory,
 } from "@prisma/client";
 
@@ -31,6 +37,7 @@ export type ProductWithVariantType = {
   variantName: string;
   variantDescription: string;
   images: { id?: string; url: string }[];
+  variantImage: string;
   categoryId: string;
   subCategoryId: string;
   isSale: boolean;
@@ -92,4 +99,31 @@ export type VariantSimplified = {
 export type VariantImageType = {
   url: string;
   image: string;
+};
+
+export type ProductPageType = Prisma.PromiseReturnType<
+  typeof retrieveProductDetails
+>;
+
+export type ProductPageDataType = Prisma.PromiseReturnType<
+  typeof getProductPageData
+>;
+
+export type ProductVariantDataType = {
+  id: string;
+  variantName: string;
+  slug: string;
+  sku: string;
+  variantImage: string;
+  weight: number;
+  isSale: boolean;
+  saleEndDate: string | null;
+  variantDescription: string | null;
+  images: {
+    url: string;
+  }[];
+  sizes: Size[];
+  specs: Spec[];
+  colors: { name: string }[];
+  keywords: string;
 };

@@ -152,6 +152,7 @@ const ProductDetails: FC<ProductDetailsProps> = ({
       variantName: data?.variantName,
       variantDescription: data?.variantDescription,
       images: data?.images || [],
+      variantImage: data?.variantImage ? [{ url: data.variantImage }] : [],
       categoryId: data?.categoryId,
       offerTagId: data?.offerTagId,
       subCategoryId: data?.subCategoryId,
@@ -201,7 +202,10 @@ const ProductDetails: FC<ProductDetailsProps> = ({
   // Reset form values when data changes
   useEffect(() => {
     if (data) {
-      form.reset(data);
+      form.reset({
+        ...data,
+        variantImage: data.variantImage ? [{ url: data.variantImage }] : [],
+      });
     }
   }, [data, form]);
 
@@ -218,6 +222,7 @@ const ProductDetails: FC<ProductDetailsProps> = ({
           variantName: values.variantName,
           variantDescription: values.variantDescription || "",
           images: values.images,
+          variantImage: values.variantImage[0].url,
           categoryId: values.categoryId,
           subCategoryId: values.subCategoryId,
           offerTagId: values.offerTagId || "",
@@ -665,6 +670,36 @@ const ProductDetails: FC<ProductDetailsProps> = ({
 
               {/* Keywords*/}
               <div className="flex items-center gap-10 py-14">
+                {/* Variant image - Keywords*/}
+                <div className="border-r pr-10">
+                  <FormField
+                    control={form.control}
+                    name="variantImage"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="ml-14">Variant Image</FormLabel>
+                        <FormControl>
+                          <ImageUpload
+                            dontShowPreview
+                            type="profile"
+                            value={field.value.map((image) => image.url)}
+                            disabled={isLoading}
+                            onChange={(url) => field.onChange([{ url }])}
+                            onRemove={(url) =>
+                              field.onChange([
+                                ...field.value.filter(
+                                  (current) => current.url !== url
+                                ),
+                              ])
+                            }
+                          />
+                        </FormControl>
+                        <FormMessage className="!mt-4" />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
                 <div className="w-full flex-1 space-y-3">
                   <FormField
                     control={form.control}
