@@ -4,6 +4,7 @@ import ReactStars from "react-rating-stars-component";
 import { CopyIcon } from "../icons";
 import Image from "next/image";
 import { useToast } from "@/hooks/use-toast";
+import ProductPrice from "./price";
 
 interface ProductInfoProps {
   productData: ProductPageDataType;
@@ -15,7 +16,7 @@ export default function ProductInfo({ productData, sizeId }: ProductInfoProps) {
 
   if (!productData) return null;
 
-  const { name, store, rating, numReviews, variants, sku } = productData;
+  const { name, store, rating, numReviews, variants, sku, sizes } = productData;
 
   const copySkuToClipboard = async () => {
     try {
@@ -82,6 +83,10 @@ export default function ProductInfo({ productData, sizeId }: ProductInfoProps) {
             )
           </Link>
         </div>
+      </div>
+
+      <div className="my-2 relative flex flex-col sm:flex-row justify-between">
+        <ProductPrice sizeId={sizeId} sizes={sizes} />
       </div>
     </div>
   );

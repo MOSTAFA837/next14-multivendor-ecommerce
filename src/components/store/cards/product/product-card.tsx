@@ -9,6 +9,7 @@ import { cn } from "@/lib/utils";
 import { ProductType, VariantSimplified } from "@/lib/types";
 import ProductCardImageSwiper from "./swiper";
 import VariantSwitcher from "./variant-switcher";
+import ProductPrice from "../../product-page/price";
 
 interface ProductCardProps {
   product: ProductType;
@@ -19,7 +20,7 @@ export default function ProductCard({ product }: ProductCardProps) {
 
   const [variant, setVariant] = useState<VariantSimplified>(variants[0]);
 
-  const { variantSlug, variantName, images } = variant;
+  const { variantSlug, variantName, images, sizes } = variant;
 
   return (
     <div>
@@ -39,19 +40,23 @@ export default function ProductCard({ product }: ProductCardProps) {
             </div>
 
             {/* Rating - Sales */}
-            <div className="flex items-center gap-x-1 h-5">
-              <ReactStars
-                count={5}
-                size={24}
-                color="#F5F5F5"
-                activeColor="#FFD804"
-                value={rating}
-                isHalf
-                edit={false}
-              />
+            {product.rating > 0 && product.sales > 0 && (
+              <div className="flex items-center gap-x-1 h-5">
+                <ReactStars
+                  count={5}
+                  size={24}
+                  color="#F5F5F5"
+                  activeColor="#FFD804"
+                  value={rating}
+                  isHalf
+                  edit={false}
+                />
 
-              <div className="text-xs text-main-secondary">{sales} sold</div>
-            </div>
+                <div className="text-xs text-main-secondary">{sales} sold</div>
+              </div>
+            )}
+
+            <ProductPrice sizes={sizes} isCard />
           </Link>
         </div>
 
