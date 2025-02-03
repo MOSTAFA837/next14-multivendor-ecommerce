@@ -5,6 +5,7 @@ import { CopyIcon } from "../icons";
 import Image from "next/image";
 import { useToast } from "@/hooks/use-toast";
 import ProductPrice from "./price";
+import Countdown from "../shared/countdown";
 
 interface ProductInfoProps {
   productData: ProductPageDataType;
@@ -16,7 +17,17 @@ export default function ProductInfo({ productData, sizeId }: ProductInfoProps) {
 
   if (!productData) return null;
 
-  const { name, store, rating, numReviews, variants, sku, sizes } = productData;
+  const {
+    name,
+    store,
+    rating,
+    numReviews,
+    variants,
+    saleEndDate,
+    isSale,
+    sku,
+    sizes,
+  } = productData;
 
   const copySkuToClipboard = async () => {
     try {
@@ -87,6 +98,12 @@ export default function ProductInfo({ productData, sizeId }: ProductInfoProps) {
 
       <div className="my-2 relative flex flex-col sm:flex-row justify-between">
         <ProductPrice sizeId={sizeId} sizes={sizes} />
+
+        {isSale && saleEndDate && (
+          <div className="mt-4 pb-2">
+            <Countdown targetDate={saleEndDate} />
+          </div>
+        )}
       </div>
     </div>
   );

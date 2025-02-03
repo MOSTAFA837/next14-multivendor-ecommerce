@@ -76,6 +76,13 @@ const config: Config = {
         blue: {
           primary: "#0d6efd",
         },
+        orange: {
+          background: "#FD384F",
+          hover: "#e23246",
+          primary: "#FA6338",
+          seconadry: "#d3031c",
+          border: "#ffe6e7",
+        },
       },
       keyframes: {
         "accordion-down": {
