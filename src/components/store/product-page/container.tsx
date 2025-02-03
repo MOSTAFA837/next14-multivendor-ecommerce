@@ -19,7 +19,7 @@ export default function ProductPageContainer({
   variantSlug,
 }: ProductPageContainerProps) {
   if (!productData) return null;
-  const { images } = productData;
+  const { images, variants } = productData;
 
   return (
     <div className="relative">
