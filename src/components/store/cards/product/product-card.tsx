@@ -9,7 +9,7 @@ import { cn } from "@/lib/utils";
 import { ProductType, VariantSimplified } from "@/lib/types";
 import ProductCardImageSwiper from "./swiper";
 import VariantSwitcher from "./variant-switcher";
-import ProductPrice from "../../product-page/price";
+import ProductPrice from "../../product-page/product-info/price";
 
 interface ProductCardProps {
   product: ProductType;
@@ -67,6 +67,7 @@ export default function ProductCard({ product }: ProductCardProps) {
             variants={variants}
             setVariant={setVariant}
             selectedVariant={variant}
+            productSlug={slug}
           />
         </div>
       </div>

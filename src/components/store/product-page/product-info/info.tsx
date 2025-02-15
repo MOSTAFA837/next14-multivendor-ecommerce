@@ -1,36 +1,52 @@
-import { ProductPageDataType } from "@/lib/types";
+import { ProductDataType, ProductVariantDataType } from "@/lib/types";
 import Link from "next/link";
 import ReactStars from "react-rating-stars-component";
-import { CopyIcon } from "../icons";
+import { CopyIcon } from "../../icons";
 import Image from "next/image";
 import { useToast } from "@/hooks/use-toast";
-import ProductPrice from "./price";
-import Countdown from "../shared/countdown";
+import Countdown from "../../shared/countdown";
 import { Separator } from "@/components/ui/separator";
 import ColorWheel from "@/components/shared/color-wheel";
+import { Dispatch, SetStateAction } from "react";
+import ProductVariantSelector from "./variant-selector";
+import ProductPrice from "./price";
+import SizeSelector from "./size-selector";
+import AssurancePolicy from "./assurance-policy";
 
 interface ProductInfoProps {
-  productData: ProductPageDataType;
+  productData: ProductDataType;
+  variant: ProductVariantDataType;
+  setVariant: Dispatch<SetStateAction<ProductVariantDataType>>;
+  variantSlug: string;
   sizeId: string | undefined;
+  setSizeId: Dispatch<SetStateAction<string>>;
+  setActiveImage: Dispatch<SetStateAction<{ url: string } | null>>;
 }
 
-export default function ProductInfo({ productData, sizeId }: ProductInfoProps) {
+export default function ProductInfo({
+  productData,
+  sizeId,
+  variant,
+  variantSlug,
+  setSizeId,
+  setVariant,
+  setActiveImage,
+}: ProductInfoProps) {
   const { toast } = useToast();
 
   if (!productData) return null;
 
+  const { name, store, rating, numReviews, variants } = productData;
   const {
-    name,
-    store,
-    rating,
-    numReviews,
-    variants,
-    saleEndDate,
     isSale,
-    sku,
-    sizes,
+    saleEndDate,
     colors,
-  } = productData;
+    sku,
+    variantName,
+    variantDescription,
+    sizes,
+    weight,
+  } = variant;
 
   const copySkuToClipboard = async () => {
     try {
@@ -48,7 +64,9 @@ export default function ProductInfo({ productData, sizeId }: ProductInfoProps) {
 
   return (
     <div className="relative w-full xl:w-[540px]">
-      <h1 className="text-main-primary inline font-bold leading-5">{name} ·</h1>
+      <h1 className="text-main-primary inline font-bold leading-5">
+        {name} · {variantName}
+      </h1>
 
       <div className="flex items-center text-xs mt-2">
         {/* Store details */}
@@ -118,6 +136,45 @@ export default function ProductInfo({ productData, sizeId }: ProductInfoProps) {
             <ColorWheel colors={colors} size={25} />
           </span>
         </div>
+
+        <div className="mt-4">
+          {variants.length > 0 && (
+            <ProductVariantSelector
+              variants={variants}
+              slug={variant.slug}
+              setSizeId={setSizeId}
+              setVariant={setVariant}
+              setActiveImage={setActiveImage}
+            />
+          )}
+        </div>
+      </div>
+
+      <div className="space-y-2 pb-2 mt-4">
+        <div>
+          <h1 className="text-main-primary font-bold">Size </h1>
+        </div>
+
+        <SizeSelector
+          sizes={variant.sizes}
+          sizeId={sizeId}
+          setSizeId={setSizeId}
+        />
+      </div>
+
+      <Separator className="mt-2" />
+      <AssurancePolicy />
+
+      <Separator className="mt-2" />
+      <div className="mt-2 flex flex-wrap gap-2">
+        {variant.keywords.split(",").map((k) => (
+          <span
+            key={k}
+            className="bg-gray-50 rounded-full px-3 py-1 text-sm text-main-secondary"
+          >
+            {k}
+          </span>
+        ))}
       </div>
     </div>
   );

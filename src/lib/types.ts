@@ -2,7 +2,9 @@ import {
   getAllStoreProducts,
   getProductPageData,
   getProducts,
+  getShippingDetails,
   retrieveProductDetails,
+  retrieveProductDetailsOptimized,
 } from "@/queries/product";
 import { getStoreShippingDetails } from "@/queries/store";
 import { getAllSubCategories } from "@/queries/subCategory";
@@ -126,4 +128,32 @@ export type ProductVariantDataType = {
   specs: Spec[];
   colors: { name: string }[];
   keywords: string;
+};
+
+export type ProductDataType = Prisma.PromiseReturnType<
+  typeof retrieveProductDetailsOptimized
+>;
+
+export type ProductShippingDetailsType = Prisma.PromiseReturnType<
+  typeof getShippingDetails
+>;
+
+export interface Country {
+  name: string;
+  code: string;
+  city: string;
+  region: string;
+}
+
+export type ShippingDetailsType = {
+  countryCode: string;
+  countryName: string;
+  city: string;
+  shippingFeeMethod: string;
+  shippingFee: number;
+  extraShippingFee: number;
+  deliveryTimeMin: number;
+  deliveryTimeMax: number;
+  shippingService: string;
+  returnPolicy: string;
 };

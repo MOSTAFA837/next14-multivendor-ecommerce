@@ -2,6 +2,7 @@
 import { db } from "@/lib/db";
 import {
   ProductPageType,
+  ProductShippingDetailsType,
   ProductWithVariantType,
   VariantImageType,
   VariantSimplified,
@@ -11,6 +12,8 @@ import { generateUniqueSlug } from "@/lib/utils";
 import { currentUser } from "@clerk/nextjs/server";
 
 import slugify from "slugify";
+import { cookies } from "next/headers";
+import { Store } from "@prisma/client";
 
 export const upsertProduct = async (
   product: ProductWithVariantType,
@@ -444,14 +447,79 @@ export const getProductPageData = async (
 
   if (!product) return;
 
-  return formatProductResponse(product);
+  const userCountry = getUserCountry();
+
+  // calculate and retrieve shipping cost
+  const shippingDetails = await getShippingDetails(
+    product.shippingFeeMethod,
+    userCountry,
+    product.store
+  );
+
+  return formatProductResponse(product, shippingDetails);
 };
+
+export const retrieveProductDetailsOptimized = async (productSlug: string) => {
+  const product = await db.product.findUnique({
+    where: {
+      slug: productSlug,
+    },
+    select: {
+      id: true,
+      name: true,
+      slug: true,
+      rating: true,
+      numReviews: true,
+      description: true,
+      specs: true,
+      questions: true,
+      categoryId: true,
+      subCategoryId: true,
+      store: true,
+      shippingFeeMethod: true,
+      variants: {
+        select: {
+          id: true,
+          variantName: true,
+          variantImage: true,
+          weight: true,
+          slug: true,
+          sku: true,
+          isSale: true,
+          saleEndDate: true,
+          variantDescription: true,
+          keywords: true,
+          specs: true,
+          sizes: true,
+          images: {
+            select: { url: true },
+          },
+          colors: {
+            select: {
+              name: true,
+            },
+          },
+        },
+      },
+    },
+  });
+
+  if (!product) {
+    throw new Error("Product not found");
+  }
+
+  const userCountry = getUserCountry();
+
+  return product;
+};
+
+// Helpers
 
 export const retrieveProductDetails = async (
   productSlug: string,
   variantSlug: string
 ) => {
-  return await db.product.findUnique({
+  const product = await db.product.findUnique({
     where: {
       slug: productSlug,
     },
@@ -475,9 +543,20 @@ export const retrieveProductDetails = async (
       },
     },
   });
+
+  if (!product) return null;
+
+  const variant_images = await db.productVariant.findMany({
+    where: { productId: product.id },
+  });
+
+  return product;
 };
 
-const formatProductResponse = async (product: ProductPageType) => {
+const formatProductResponse = async (
+  product: ProductPageType,
+  shippingDetails: ProductShippingDetailsType
+) => {
   if (!product) return;
 
   const variant = product.variants[0];
@@ -527,7 +606,93 @@ const formatProductResponse = async (product: ProductPageType) => {
       ratingStatistics: [],
       reviewsWithImageCount: 5,
     },
-    shippingDetails: {},
+    shippingDetails,
     relatedProducts: [],
   };
+};
+
+const getUserCountry = () => {
+  const cookieStore = cookies();
+
+  const userCountry = cookieStore.get("userCountry");
+  const parsedCountry = userCountry ? JSON.parse(userCountry.value) : null;
+
+  if (userCountry) {
+    return parsedCountry;
+  } else {
+    return { name: "Egypt", code: "EG" };
+  }
+};
+
+export const getShippingDetails = async (
+  shippingFeeMethod: string,
+  userCountry: { name: string; code: string; city: string },
+  store: Store
+) => {
+  const country = await db.country.findUnique({
+    where: {
+      name: userCountry.name,
+      code: userCountry.code,
+    },
+  });
+
+  if (country) {
+    const shippingRate = await db.shippingRate.findFirst({
+      where: {
+        countryId: country.id,
+        storeId: store.id,
+      },
+    });
+
+    const returnPolicy = shippingRate?.returnPolicy || store.returnPolicy;
+    const shippingService =
+      shippingRate?.shippingService || store.shippingService;
+    const shippingFeePerItem =
+      shippingRate?.shippingFeePerItem || store.shippingFeePerItem;
+    const shippingFeeForAdditionalItem =
+      shippingRate?.shippingFeeForAdditionalItem ||
+      store.shippingFeeForAdditionalItem;
+    const shippingFeePerKg =
+      shippingRate?.shippingFeePerKg || store.shippingFeePerKg;
+    const shippingFeeFixed =
+      shippingRate?.shippingFeeFixed || store.shippingFeeFixed;
+    const deliveryTimeMin =
+      shippingRate?.deliveryTimeMin || store.deliveryTimeMin;
+    const deliveryTimeMax =
+      shippingRate?.deliveryTimeMax || store.deliveryTimeMax;
+
+    let shippingDetails = {
+      shippingFeeMethod,
+      shippingService,
+      shippingFee: 0,
+      extraShippingFee: 0,
+      deliveryTimeMin,
+      deliveryTimeMax,
+      returnPolicy,
+      countryCode: userCountry.code,
+      countryName: userCountry.name,
+      city: userCountry.city,
+    };
+
+    switch (shippingFeeMethod) {
+      case "ITEM":
+        shippingDetails.shippingFee = shippingFeePerItem;
+        shippingDetails.extraShippingFee = shippingFeeForAdditionalItem;
+        break;
+
+      case "WEIGHT":
+        shippingDetails.shippingFee = shippingFeePerKg;
+        break;
+
+      case "FIXED":
+        shippingDetails.shippingFee = shippingFeeFixed;
+        break;
+
+      default:
+        break;
+    }
+    return shippingDetails;
+  }
+
+  return false;
 };

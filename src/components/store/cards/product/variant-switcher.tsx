@@ -9,6 +9,7 @@ interface VariantSwitcherProps {
   variants: VariantSimplified[];
   selectedVariant: VariantSimplified;
   setVariant: Dispatch<SetStateAction<VariantSimplified>>;
+  productSlug: string;
 }
 
 export default function VariantSwitcher({
@@ -16,6 +17,7 @@ export default function VariantSwitcher({
   variants,
   selectedVariant,
   setVariant,
+  productSlug,
 }: VariantSwitcherProps) {
   return (
     <div>
@@ -24,7 +26,7 @@ export default function VariantSwitcher({
           {images.map((image, i) => (
             <Link
               key={i}
-              href={image.url}
+              href={`/product/${productSlug}?variant=${variants[i].variantSlug}`}
               className={cn("p-0.5 rounded-full border-2 border-transparent", {
                 "border-border": variants[i] === selectedVariant,
               })}
