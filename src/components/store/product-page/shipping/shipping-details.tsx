@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react";
-import { ChevronRight, Truck } from "lucide-react";
+import { ChevronDown, ChevronRight, ChevronUp, Truck } from "lucide-react";
 
 import { ProductShippingDetailsType, ShippingDetailsType } from "@/lib/types";
 import { BarLoader, BounceLoader, MoonLoader } from "react-spinners";
 import { getMonthDay, getShippingDateRange } from "@/lib/utils";
 import { min } from "date-fns";
+import ShippingFee from "./shipping-fee";
 
 interface ShippingDetailsProps {
   shippingDetails: ProductShippingDetailsType;
@@ -22,6 +23,8 @@ export default function ShippingDetails({
   loading,
 }: ShippingDetailsProps) {
   const [shippingTotal, setShippingTotal] = useState<number>();
+
+  const [toggle, setToggle] = useState(true);
 
   useEffect(() => {
     if (!shippingDetails) return;
@@ -51,6 +54,8 @@ export default function ShippingDetails({
 
   const {
     isFreeShipping,
+    shippingFee = 0,
+    extraShippingFee = 0,
     shippingFeeMethod = "Loading...",
     shippingService = "Loading...",
     deliveryTimeMin = 0,
@@ -61,12 +66,9 @@ export default function ShippingDetails({
     ? getShippingDateRange(deliveryTimeMin, deliveryTimeMax)
     : { minDate: "Loading...", maxDate: "Loading..." };
 
-  console.log("minDate", minDate.slice(4));
-  console.log("maxDate", maxDate);
-
   return (
-    <div>
-      <div className="space-y-1">
+    <div className="overflow-hidden ">
+      <div className="space-y-2">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-x-1">
             <Truck className="w-4" />
@@ -116,6 +118,30 @@ export default function ShippingDetails({
             )}
           </strong>
         </span>
+
+        {!isFreeShipping && shippingDetails && toggle && (
+          <ShippingFee
+            fee={shippingFee}
+            extraFee={extraShippingFee}
+            method={shippingFeeMethod}
+            quantity={quantity}
+            weight={weight}
+          />
+        )}
+
+        <div
+          onClick={() => setToggle((prev) => !prev)}
+          className="max-w-[calc(100%-2rem)] m-4 flex items-center bg-gray-100 hover:bg-gray-200 h-5 cursor-pointer"
+        >
+          <div className="w-full flex items-center justify-between gap-x-1 px-2">
+            <span className="text-xs">{toggle ? "Hide" : "Show"}</span>
+            {toggle ? (
+              <ChevronUp className="w-4" />
+            ) : (
+              <ChevronDown className="w-4" />
+            )}
+          </div>
+        </div>
       </div>
     </div>
   );

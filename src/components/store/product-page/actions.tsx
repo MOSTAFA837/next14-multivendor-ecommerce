@@ -61,7 +61,7 @@ export default function Actions({
             <ShippingDetails
               shippingDetails={shippingDetails}
               countryName={userCountry.name}
-              quantity={1}
+              quantity={2}
               weight={weight}
               loading={loading}
             />
