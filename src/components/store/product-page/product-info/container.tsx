@@ -1,11 +1,6 @@
 "use client";
 
-import {
-  Country,
-  ProductDataType,
-  ProductPageDataType,
-  ProductVariantDataType,
-} from "@/lib/types";
+import { Country, ProductDataType, ProductVariantDataType } from "@/lib/types";
 import { ReactNode, useEffect, useState } from "react";
 import ProductSwiper from "./swiper";
 import ProductInfo from "./info";
@@ -24,7 +19,7 @@ export default function ProductPageContainer({
   userCountry,
   variantSlug,
 }: ProductPageContainerProps) {
-  const { id, variants, slug } = productData;
+  const { id, variants, slug, freeShipping } = productData;
 
   const [variant, setVariant] = useState<ProductVariantDataType>(
     variants.find((v) => v.slug === variantSlug) || variants[0]
@@ -82,6 +77,8 @@ export default function ProductPageContainer({
               userCountry={userCountry}
               shippingFeeMethod={productData.shippingFeeMethod}
               store={productData.store}
+              weight={weight}
+              freeShipping={freeShipping}
             />
           </div>
         </div>

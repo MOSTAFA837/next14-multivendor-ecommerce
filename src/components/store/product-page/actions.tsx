@@ -1,4 +1,8 @@
-import { Country, ShippingDetailsType } from "@/lib/types";
+import {
+  Country,
+  FreeShippingWithCountriesType,
+  ShippingDetailsType,
+} from "@/lib/types";
 import ShipTo from "./shipping/ship-to";
 import ShippingDetails from "./shipping/shipping-details";
 import { useEffect, useState } from "react";
@@ -9,33 +13,41 @@ interface ActionsProps {
   userCountry: Country;
   shippingFeeMethod: string;
   store: Store;
+  weight: number;
+  freeShipping: FreeShippingWithCountriesType | null;
 }
 
 export default function Actions({
   userCountry,
   shippingFeeMethod,
   store,
+  weight,
+  freeShipping,
 }: ActionsProps) {
   const [shippingDetails, setShippingDetails] =
     useState<ShippingDetailsType | null>(null);
+
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const getShippingDetailsHandler = async () => {
       const data = await getShippingDetails(
         shippingFeeMethod,
         userCountry,
-        store
+        store,
+        freeShipping
       );
 
       if (data) {
         setShippingDetails(data);
+        setLoading(false);
       } else {
         setShippingDetails(null);
       }
     };
 
     getShippingDetailsHandler();
-  }, [shippingFeeMethod, store, userCountry]);
+  }, [freeShipping, shippingFeeMethod, store, userCountry]);
 
   console.log("shippingDetails", shippingDetails);
 
@@ -50,7 +62,8 @@ export default function Actions({
               shippingDetails={shippingDetails}
               countryName={userCountry.name}
               quantity={1}
-              weight={1}
+              weight={weight}
+              loading={loading}
             />
           )}
         </div>

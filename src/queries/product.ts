@@ -1,6 +1,7 @@
 "use server";
 import { db } from "@/lib/db";
 import {
+  FreeShippingWithCountriesType,
   ProductPageType,
   ProductShippingDetailsType,
   ProductWithVariantType,
@@ -453,7 +454,8 @@ export const getProductPageData = async (
   const shippingDetails = await getShippingDetails(
     product.shippingFeeMethod,
     userCountry,
-    product.store
+    product.store,
+    product.freeShipping
   );
 
   return formatProductResponse(product, shippingDetails);
@@ -477,6 +479,11 @@ export const retrieveProductDetailsOptimized = async (productSlug: string) => {
       subCategoryId: true,
       store: true,
       shippingFeeMethod: true,
+      freeShipping: {
+        include: {
+          eligibaleCountries: true,
+        },
+      },
       variants: {
         select: {
           id: true,
@@ -530,6 +537,11 @@ export const retrieveProductDetails = async (
       store: true,
       specs: true,
       questions: true,
+      freeShipping: {
+        include: {
+          eligibaleCountries: true,
+        },
+      },
       variants: {
         where: {
           slug: variantSlug,
@@ -627,7 +639,8 @@ const getUserCountry = () => {
 export const getShippingDetails = async (
   shippingFeeMethod: string,
   userCountry: { name: string; code: string; city: string },
-  store: Store
+  store: Store,
+  freeShipping: FreeShippingWithCountriesType | null
 ) => {
   const country = await db.country.findUnique({
     where: {
@@ -672,20 +685,38 @@ export const getShippingDetails = async (
       countryCode: userCountry.code,
       countryName: userCountry.name,
       city: userCountry.city,
+      isFreeShipping: false,
     };
+
+    // check for free shipping
+    if (freeShipping) {
+      const free_shipping_countries = freeShipping.eligibaleCountries;
+
+      const check_free_shipping = free_shipping_countries.find(
+        (item) => item.countryId === country.id
+      );
+
+      if (check_free_shipping) {
+        shippingDetails.isFreeShipping = true;
+      }
+    }
+
+    const { isFreeShipping } = shippingDetails;
 
     switch (shippingFeeMethod) {
       case "ITEM":
-        shippingDetails.shippingFee = shippingFeePerItem;
-        shippingDetails.extraShippingFee = shippingFeeForAdditionalItem;
+        shippingDetails.shippingFee = isFreeShipping ? 0 : shippingFeePerItem;
+        shippingDetails.extraShippingFee = isFreeShipping
+          ? 0
+          : shippingFeeForAdditionalItem;
         break;
 
       case "WEIGHT":
-        shippingDetails.shippingFee = shippingFeePerKg;
+        shippingDetails.shippingFee = isFreeShipping ? 0 : shippingFeePerKg;
         break;
 
       case "FIXED":
-        shippingDetails.shippingFee = shippingFeeFixed;
+        shippingDetails.shippingFee = isFreeShipping ? 0 : shippingFeeFixed;
         break;
 
       default:

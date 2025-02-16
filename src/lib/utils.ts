@@ -142,3 +142,27 @@ export async function getUserCountry(): Promise<Country> {
 
   return userCountry;
 }
+
+export const getShippingDateRange = (
+  minDays: number,
+  maxDays: number,
+  date?: Date
+): { minDate: string; maxDate: string } => {
+  const currentDate = date ? new Date(date) : new Date();
+
+  const minDate = new Date(currentDate);
+  minDate.setDate(currentDate.getDate() + minDays);
+
+  const maxDate = new Date(currentDate);
+  maxDate.setDate(currentDate.getDate() + maxDays);
+
+  return {
+    minDate: minDate.toISOString().split("T")[0],
+    maxDate: maxDate.toISOString().split("T")[0],
+  };
+};
+
+export function getMonthDay(dateString: string) {
+  const parts = dateString.split("-");
+  return parts[1] + "-" + parts[2];
+}

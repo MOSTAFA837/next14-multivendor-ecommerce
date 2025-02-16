@@ -1,6 +1,6 @@
 import {
   getAllStoreProducts,
-  getProductPageData,
+  // getProductPageData,
   getProducts,
   getShippingDetails,
   retrieveProductDetails,
@@ -10,6 +10,8 @@ import { getStoreShippingDetails } from "@/queries/store";
 import { getAllSubCategories } from "@/queries/subCategory";
 import {
   Category,
+  FreeShipping,
+  FreeShippingCountry,
   Prisma,
   ProductVariantImage,
   ShippingRate,
@@ -107,9 +109,9 @@ export type ProductPageType = Prisma.PromiseReturnType<
   typeof retrieveProductDetails
 >;
 
-export type ProductPageDataType = Prisma.PromiseReturnType<
-  typeof getProductPageData
->;
+// export type ProductPageDataType = Prisma.PromiseReturnType<
+//   typeof getProductPageData
+// >;
 
 export type ProductVariantDataType = {
   id: string;
@@ -156,4 +158,9 @@ export type ShippingDetailsType = {
   deliveryTimeMax: number;
   shippingService: string;
   returnPolicy: string;
+  isFreeShipping: boolean;
+};
+
+export type FreeShippingWithCountriesType = FreeShipping & {
+  eligibaleCountries: FreeShippingCountry[];
 };

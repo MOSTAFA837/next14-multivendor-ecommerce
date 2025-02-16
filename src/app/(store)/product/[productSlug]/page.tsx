@@ -19,6 +19,8 @@ export default async function ProductVariantPage({
   const product = await retrieveProductDetailsOptimized(params.productSlug);
   const variant = product.variants.find((v) => v.slug === searchParams.variant);
 
+  console.log(product);
+
   const specs = {
     product: product.specs,
     variant: variant?.specs,
