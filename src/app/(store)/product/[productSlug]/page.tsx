@@ -1,4 +1,6 @@
 import ProductPageContainer from "@/components/store/product-page/product-info/container";
+import RelatedProducts from "@/components/store/product-page/related-products";
+import { Separator } from "@/components/ui/separator";
 import { Country } from "@/lib/types";
 import { retrieveProductDetailsOptimized } from "@/queries/product";
 import { cookies } from "next/headers";
@@ -18,8 +20,6 @@ export default async function ProductVariantPage({
 }: ProductVariantPageProps) {
   const product = await retrieveProductDetailsOptimized(params.productSlug);
   const variant = product.variants.find((v) => v.slug === searchParams.variant);
-
-  console.log(product);
 
   const specs = {
     product: product.specs,
@@ -49,7 +49,16 @@ export default async function ProductVariantPage({
         variantSlug={searchParams.variant}
         userCountry={userCountry}
       >
-        <div></div>
+        <>
+          <Separator />
+
+          {/* related products */}
+          <RelatedProducts
+            productId={product.id}
+            categoryId={product.categoryId}
+            subCategoryId={product.subCategoryId}
+          />
+        </>
       </ProductPageContainer>
     </div>
   );

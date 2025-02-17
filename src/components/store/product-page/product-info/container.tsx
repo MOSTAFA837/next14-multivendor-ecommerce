@@ -131,9 +131,19 @@ export default function ProductPageContainer({
               handleChange={handleChange}
               sizes={sizes}
               isProductValid={isProductValid}
+              productData={productData}
+              variantSlug={variantSlug}
+              variantName={variantName}
             />
           </div>
         </div>
+      </div>
+
+      <div
+        id="children-container"
+        className="lg:w-[calc(100%-410px)] mt-6 pb-16"
+      >
+        {children}
       </div>
     </div>
   );

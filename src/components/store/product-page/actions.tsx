@@ -2,6 +2,7 @@ import {
   CartProductType,
   Country,
   FreeShippingWithCountriesType,
+  ProductDataType,
   ShippingDetailsType,
 } from "@/lib/types";
 import ShipTo from "./shipping/ship-to";
@@ -12,6 +13,7 @@ import { Size, Store } from "@prisma/client";
 import ReturnPrivacy from "./return-privacy";
 import QuantitySelector from "./quantity-selector";
 import { cn } from "@/lib/utils";
+import SocialShare from "../shared/social-share";
 
 interface ActionsProps {
   userCountry: Country;
@@ -24,6 +26,9 @@ interface ActionsProps {
   sizes: Size[];
   handleChange: (property: keyof CartProductType, value: any) => void;
   isProductValid: boolean;
+  productData: ProductDataType;
+  variantSlug: string;
+  variantName: string;
 }
 
 export default function Actions({
@@ -37,6 +42,9 @@ export default function Actions({
   sizes,
   handleChange,
   isProductValid,
+  productData,
+  variantSlug,
+  variantName,
 }: ActionsProps) {
   const [shippingDetails, setShippingDetails] =
     useState<ShippingDetailsType | null>(null);
@@ -128,6 +136,11 @@ export default function Actions({
         >
           <span>Add to cart</span>
         </button>
+
+        <SocialShare
+          url={`/product/${productData.slug}/${variantSlug}`}
+          quote={`${productData.name} · ${variantName}`}
+        />
       </div>
     </div>
   );

@@ -520,6 +520,94 @@ export const retrieveProductDetailsOptimized = async (productSlug: string) => {
   return product;
 };
 
+export const getRelatedProducts = async (
+  productId: string,
+  categoryId: string,
+  subCategoryId: string
+) => {
+  const subCategoryProducts = await db.product.findMany({
+    where: {
+      subCategoryId: subCategoryId,
+      categoryId: categoryId,
+      id: {
+        not: productId,
+      },
+    },
+    include: {
+      variants: {
+        include: {
+          sizes: true,
+          images: true,
+          colors: true,
+        },
+      },
+    },
+    take: 6,
+  });
+
+  let relatedProducts = subCategoryProducts;
+
+  console.log(relatedProducts);
+
+  if (relatedProducts.length < 6) {
+    const remainCount = 6 - relatedProducts.length;
+    const categoryProducts = await db.product.findMany({
+      where: {
+        categoryId,
+        id: {
+          notIn: [productId, ...relatedProducts.map((product) => product.id)],
+        },
+      },
+      include: {
+        variants: {
+          include: {
+            sizes: true,
+            images: true,
+            colors: true,
+          },
+        },
+      },
+      take: remainCount,
+    });
+
+    relatedProducts = [...relatedProducts, ...categoryProducts];
+  }
+
+  const productsWithFilteredVariants = relatedProducts.map((product) => {
+    const filterdVariants = product.variants;
+
+    const variants: VariantSimplified[] = filterdVariants.map((variant) => ({
+      variantId: variant.id,
+      variantSlug: variant.slug,
+      variantName: variant.variantName,
+      images: variant.images,
+      sizes: variant.sizes,
+    }));
+
+    const variantImages: VariantImageType[] = filterdVariants.map(
+      (variant) => ({
+        url: `/product/${product.slug}/${variant.slug}`,
+        image: variant.variantImage
+          ? variant.variantImage
+          : variant.images[0].url,
+      })
+    );
+
+    return {
+      id: product.id,
+      slug: product.slug,
+      name: product.name,
+      rating: product.rating,
+      sales: product.sales,
+      numReviews: product.numReviews,
+      variants,
+      variantImages,
+    };
+  });
+
+  return productsWithFilteredVariants;
+};
+
 // Helpers
 
 export const retrieveProductDetails = async (
