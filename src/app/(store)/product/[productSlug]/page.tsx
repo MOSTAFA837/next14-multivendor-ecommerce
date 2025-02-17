@@ -1,3 +1,4 @@
+import StoreCard from "@/components/store/cards/store-card";
 import Descriptions from "@/components/store/product-page/descriptions";
 import ProductPageContainer from "@/components/store/product-page/product-info/container";
 import Questions from "@/components/store/product-page/questions";
@@ -45,6 +46,15 @@ export default async function ProductVariantPage({
     userCountry = JSON.parse(userCountryCookie.value) as Country;
   }
 
+  const store = {
+    id: product.store.id,
+    name: product.store.name,
+    url: product.store.url,
+    logo: product.store.logo,
+    followersCount: 0,
+    isUserFollowingStore: false,
+  };
+
   return (
     <div className="max-w-[1650px] mx-auto p-4 overflow-x-hidden">
       <ProductPageContainer
@@ -80,6 +90,9 @@ export default async function ProductVariantPage({
         {product.questions && <Questions questions={product.questions} />}
 
         <Separator className="mt-6" />
+        <div className="h-6" />
+
+        <StoreCard store={store} />
       </ProductPageContainer>
     </div>
   );

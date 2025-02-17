@@ -216,3 +216,47 @@ export const upsertShippingRate = async (
     throw new Error(error);
   }
 };
+
+export const getStoreFollowingInfo = async (storeId: string) => {
+  const user = await currentUser();
+  let isUserFollowingStore = false;
+
+  if (user) {
+    const storeFollowers = await db.store.findUnique({
+      where: {
+        id: storeId,
+      },
+      select: {
+        followers: {
+          where: {
+            id: user.id,
+          },
+          select: { id: true },
+        },
+      },
+    });
+
+    if (storeFollowers && storeFollowers.followers.length > 0) {
+      isUserFollowingStore = true;
+    }
+  }
+
+  const storeFollowersInfo = await db.store.findUnique({
+    where: {
+      id: storeId,
+    },
+    select: {
+      _count: {
+        select: {
+          followers: true,
+        },
+      },
+    },
+  });
+  return {
+    isUserFollowingStore,
+    followersCount: storeFollowersInfo
+      ? storeFollowersInfo._count.followers
+      : 0,
+  };
+};
