@@ -95,8 +95,6 @@ export default function ProductPageContainer({
     }
   }, [isProductValid, productToCart]);
 
-  // console.log("qty,stock", productToCart.quantity, productToCart.stock);
-
   return (
     <div className="relative">
       <div className="w-full xl:flex xl:gap-4">
@@ -132,6 +130,7 @@ export default function ProductPageContainer({
               productToCart={productToCart}
               handleChange={handleChange}
               sizes={sizes}
+              isProductValid={isProductValid}
             />
           </div>
         </div>

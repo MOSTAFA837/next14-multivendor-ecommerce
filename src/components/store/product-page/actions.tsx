@@ -11,6 +11,7 @@ import { getShippingDetails } from "@/queries/product";
 import { Size, Store } from "@prisma/client";
 import ReturnPrivacy from "./return-privacy";
 import QuantitySelector from "./quantity-selector";
+import { cn } from "@/lib/utils";
 
 interface ActionsProps {
   userCountry: Country;
@@ -22,6 +23,7 @@ interface ActionsProps {
   productToCart: CartProductType;
   sizes: Size[];
   handleChange: (property: keyof CartProductType, value: any) => void;
+  isProductValid: boolean;
 }
 
 export default function Actions({
@@ -34,6 +36,7 @@ export default function Actions({
   productToCart,
   sizes,
   handleChange,
+  isProductValid,
 }: ActionsProps) {
   const [shippingDetails, setShippingDetails] =
     useState<ShippingDetailsType | null>(null);
@@ -97,6 +100,34 @@ export default function Actions({
             />
           </div>
         )}
+
+        <button
+          disabled={!isProductValid}
+          onClick={() => {}}
+          className={cn(
+            "relative w-full py-2.5 min-w-20 bg-orange-background hover:bg-orange-hover text-white h-11 rounded-3xl leading-6 inline-block font-bold whitespace-nowrap border border-orange-border cursor-pointer transition-all duration-300 ease-bezier-1 select-none"
+            // ,
+            // {
+            //   "cursor-not-allowed": !isProductValid,
+            // }
+          )}
+        >
+          <span>Buy now</span>
+        </button>
+
+        <button
+          disabled={!isProductValid}
+          className={cn(
+            "relative w-full py-2.5 min-w-20 bg-orange-border hover:bg-[#e4cdce] text-orange-hover h-11 rounded-3xl leading-6 inline-block font-bold whitespace-nowrap border border-orange-border cursor-pointer transition-all duration-300 ease-bezier-1 select-none"
+            // ,
+            // {
+            //   "cursor-not-allowed": !isProductValid,
+            // }
+          )}
+          onClick={() => {}}
+        >
+          <span>Add to cart</span>
+        </button>
       </div>
     </div>
   );
