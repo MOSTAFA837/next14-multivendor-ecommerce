@@ -1,10 +1,16 @@
 "use client";
 
-import { Country, ProductDataType, ProductVariantDataType } from "@/lib/types";
+import {
+  CartProductType,
+  Country,
+  ProductDataType,
+  ProductVariantDataType,
+} from "@/lib/types";
 import { ReactNode, useEffect, useState } from "react";
 import ProductSwiper from "./swiper";
 import ProductInfo from "./info";
 import Actions from "../actions";
+import { isProductValidToAdd } from "@/lib/utils";
 
 interface ProductPageContainerProps {
   productData: ProductDataType;
@@ -49,6 +55,46 @@ export default function ProductPageContainer({
     images[0]
   );
 
+  // initialize the default product data for the cart item
+  const data: CartProductType = {
+    productId: id,
+    variantId,
+    productSlug: slug,
+    variantSlug,
+    name: productData.name,
+    variantName,
+    image: images[0].url,
+    variantImage,
+    sizeId,
+    size: "",
+    quantity: 1,
+    price: 0,
+    stock: 1,
+    weight,
+    shippingMethod: productData.shippingFeeMethod,
+    shippingService: "",
+    shippingFee: 0,
+    extraShippingFee: 0,
+    deliveryTimeMin: 0,
+    deliveryTimeMax: 0,
+    isFreeShipping: false,
+  };
+
+  const [productToCart, setProductToCart] = useState<CartProductType>(data);
+  const [isProductValid, setIsProductValid] = useState<boolean>(false);
+
+  const handleChange = (property: keyof CartProductType, value: any) => {
+    setProductToCart((prev) => ({ ...prev, [property]: value }));
+  };
+
+  useEffect(() => {
+    const check = isProductValidToAdd(productToCart);
+
+    if (check !== isProductValid) {
+      setIsProductValid(check);
+    }
+  }, [isProductValid, productToCart]);
+
   return (
     <div className="relative">
       <div className="w-full xl:flex xl:gap-4">
@@ -69,6 +115,7 @@ export default function ProductPageContainer({
             sizeId={sizeId}
             setSizeId={setSizeId}
             setActiveImage={setActiveImage}
+            handleChange={handleChange}
           />
 
           {/* shipping details - buy actions buttons */}

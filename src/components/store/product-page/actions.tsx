@@ -8,6 +8,7 @@ import ShippingDetails from "./shipping/shipping-details";
 import { useEffect, useState } from "react";
 import { getShippingDetails } from "@/queries/product";
 import { Store } from "@prisma/client";
+import ReturnPrivacy from "./return-privacy";
 
 interface ActionsProps {
   userCountry: Country;
@@ -49,8 +50,6 @@ export default function Actions({
     getShippingDetailsHandler();
   }, [freeShipping, shippingFeeMethod, store, userCountry]);
 
-  console.log("shippingDetails", shippingDetails);
-
   return (
     <div className="bg-white border rounded-md overflow-hidden overflow-y-auto p-4 pb-0">
       <>
@@ -67,6 +66,11 @@ export default function Actions({
             />
           )}
         </div>
+
+        <ReturnPrivacy
+          returnPolicy={shippingDetails?.returnPolicy}
+          loading={loading}
+        />
       </>
     </div>
   );

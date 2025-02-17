@@ -3,7 +3,7 @@ import { twMerge } from "tailwind-merge";
 import ColorThief from "colorthief";
 import { PrismaClient, Role } from "@prisma/client";
 import { db } from "./db";
-import { Country } from "./types";
+import { CartProductType, Country } from "./types";
 import countries from "@/data/countries.json";
 
 export function cn(...inputs: ClassValue[]) {
@@ -166,3 +166,52 @@ export function getMonthDay(dateString: string) {
   const parts = dateString.split("-");
   return parts[1] + "-" + parts[2];
 }
+
+export const isProductValidToAdd = (product: CartProductType): boolean => {
+  const {
+    productId,
+    variantId,
+    productSlug,
+    variantSlug,
+    name,
+    variantName,
+    image,
+    quantity,
+    price,
+    sizeId,
+    size,
+    stock,
+    shippingFee,
+    extraShippingFee,
+    shippingMethod,
+    shippingService,
+    variantImage,
+    weight,
+    deliveryTimeMin,
+    deliveryTimeMax,
+  } = product;
+
+  if (
+    !productId ||
+    !variantId ||
+    !productSlug ||
+    !variantSlug ||
+    !name ||
+    !variantName ||
+    !image ||
+    quantity <= 0 ||
+    price <= 0 ||
+    !sizeId ||
+    !size ||
+    stock <= 0 ||
+    weight <= 0 ||
+    !shippingMethod ||
+    !variantImage ||
+    deliveryTimeMin < 0 ||
+    deliveryTimeMax < deliveryTimeMin
+  ) {
+    return false; // Validation failed
+  }
+
+  return true; // Product is valid
+};

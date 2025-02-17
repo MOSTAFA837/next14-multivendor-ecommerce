@@ -1,6 +1,6 @@
+import { CartProductType } from "@/lib/types";
 import { cn } from "@/lib/utils";
-import { usePathname, useRouter } from "next/navigation";
-import { space } from "postcss/lib/list";
+import { FC, useEffect, useState } from "react";
 
 interface SimplifiedSize {
   id: string;
@@ -14,14 +14,41 @@ interface Props {
   sizeId?: string | undefined;
   sizes: SimplifiedSize[];
   isCard?: boolean;
+  handleChange: (property: keyof CartProductType, value: any) => void;
+  weight?: number;
 }
 
-export default function ProductPrice({ sizeId, sizes, isCard }: Props) {
-  if (!sizes || sizes.length === 0) {
-    return;
-  }
+const ProductPrice: FC<Props> = ({
+  sizeId,
+  sizes,
+  isCard,
+  handleChange,
+  weight,
+}) => {
+  const [selectedSize, setSelectedSize] = useState<SimplifiedSize | undefined>(
+    undefined
+  );
 
-  if (!sizeId) {
+  useEffect(() => {
+    if (sizes && sizes.length > 0) {
+      if (sizeId) {
+        const foundSize = sizes.find((size) => size.id === sizeId);
+
+        if (foundSize) {
+          setSelectedSize(foundSize);
+
+          const discountedPrice =
+            foundSize.price * (1 - foundSize.discount / 100);
+
+          handleChange("price", discountedPrice);
+          handleChange("stock", foundSize.quantity);
+        }
+      }
+    }
+  }, [handleChange, sizeId, sizes]);
+
+  // If no sizeId passed, calculate range of prices and total quantity
+  if (!sizeId && sizes && sizes.length > 0) {
     const discountedPrices = sizes.map(
       (size) => size.price * (1 - size.discount / 100)
     );
@@ -35,16 +62,7 @@ export default function ProductPrice({ sizeId, sizes, isCard }: Props) {
     const maxPrice = Math.max(...discountedPrices).toFixed(2);
 
     const priceDisplay =
-      minPrice === maxPrice ? minPrice : `${minPrice} - ${maxPrice}`;
-
-    let discount = 0;
-
-    if (minPrice === maxPrice) {
-      let checkDiscount = sizes.find((size) => size.discount > 0);
-      if (checkDiscount) {
-        discount = checkDiscount.discount;
-      }
-    }
+      minPrice === maxPrice ? `$${minPrice}` : `$${minPrice} - $${maxPrice}`;
 
     return (
       <div>
@@ -57,48 +75,53 @@ export default function ProductPrice({ sizeId, sizes, isCard }: Props) {
             {priceDisplay}
           </span>
         </div>
-
         {!sizeId && !isCard && (
-          <>
-            <div className="text-orange-background text-xs leading-4 mt-1 ">
-              <span>Note : Select a size to see the exact price</span>
-            </div>
-
-            <p className="mt-2 text-xs">{totalQuantity} pieces</p>
-          </>
+          <div className="text-orange-background text-xs leading-4 mt-1">
+            <span>Note : Select a size to see the exact price</span>
+          </div>
+        )}
+        {!sizeId && !isCard && (
+          <p className="mt-2 text-xs">{totalQuantity} pieces</p>
         )}
       </div>
     );
   }
 
-  const selectedSize = sizes.find((size) => size.id === sizeId);
+  // If sizeId passed, show specific size price and quantity
+  if (selectedSize) {
+    const discountedPrice =
+      selectedSize.price * (1 - selectedSize.discount / 100);
 
-  if (!selectedSize) return <></>;
-
-  const discountedPrice =
-    selectedSize.price * (1 - selectedSize.discount / 100);
-
-  return (
-    <div>
-      <div className="text-orange-primary inline-block font-bold leading-none mr-2.5">
-        <span className="inline-block text-4xl">
-          ${discountedPrice.toFixed(2)}
-        </span>
+    return (
+      <div>
+        <div className="text-orange-primary inline-block font-bold leading-none mr-2.5">
+          <span className="inline-block text-4xl">
+            ${discountedPrice.toFixed(2)}
+          </span>
+        </div>
+        {selectedSize.price !== discountedPrice && (
+          <span className="text-[#999] inline-block text-xl font-normal leading-6 mr-2 line-through">
+            ${selectedSize.price.toFixed(2)}
+          </span>
+        )}
+        {selectedSize.discount > 0 && (
+          <span className="inline-block text-orange-seconadry text-xl leading-6">
+            {selectedSize.discount}% off
+          </span>
+        )}
+        <p className="mt-2 text-xs">
+          {weight && <span>{weight}kg - </span>}
+          {selectedSize.quantity > 0 ? (
+            `${selectedSize.quantity} items`
+          ) : (
+            <span className="text-red-500">Out of stock</span>
+          )}
+        </p>
       </div>
+    );
+  }
 
-      {selectedSize.price !== discountedPrice && (
-        <span className="text-[#999] inline-block text-xl font-normal leading-6 mr-2 line-through">
-          {selectedSize.price.toFixed(2)}
-        </span>
-      )}
+  return null; // Return nothing if no valid sizeId
+};
 
-      {selectedSize.discount > 0 && (
-        <span className="inline-block text-orange-secondary text-xl leading-6">
-          {selectedSize.discount} % off
-        </span>
-      )}
-
-      <p className="mt-2 text-xs">{selectedSize.quantity} pieces</p>
-    </div>
-  );
-}
+export default ProductPrice;

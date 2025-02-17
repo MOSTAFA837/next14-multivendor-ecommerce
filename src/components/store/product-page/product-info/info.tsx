@@ -1,4 +1,8 @@
-import { ProductDataType, ProductVariantDataType } from "@/lib/types";
+import {
+  CartProductType,
+  ProductDataType,
+  ProductVariantDataType,
+} from "@/lib/types";
 import Link from "next/link";
 import ReactStars from "react-rating-stars-component";
 import { CopyIcon } from "../../icons";
@@ -21,6 +25,7 @@ interface ProductInfoProps {
   sizeId: string | undefined;
   setSizeId: Dispatch<SetStateAction<string>>;
   setActiveImage: Dispatch<SetStateAction<{ url: string } | null>>;
+  handleChange: (property: keyof CartProductType, value: any) => void;
 }
 
 export default function ProductInfo({
@@ -31,6 +36,7 @@ export default function ProductInfo({
   setSizeId,
   setVariant,
   setActiveImage,
+  handleChange,
 }: ProductInfoProps) {
   const { toast } = useToast();
 
@@ -118,7 +124,11 @@ export default function ProductInfo({
       </div>
 
       <div className="my-2 relative flex flex-col sm:flex-row justify-between">
-        <ProductPrice sizeId={sizeId} sizes={sizes} />
+        <ProductPrice
+          sizeId={sizeId}
+          sizes={sizes}
+          handleChange={handleChange}
+        />
 
         {isSale && saleEndDate && (
           <div className="mt-4 pb-2">
