@@ -1,6 +1,8 @@
 import Descriptions from "@/components/store/product-page/descriptions";
 import ProductPageContainer from "@/components/store/product-page/product-info/container";
+import Questions from "@/components/store/product-page/questions";
 import RelatedProducts from "@/components/store/product-page/related-products";
+import Specifications from "@/components/store/product-page/specifications";
 import { Separator } from "@/components/ui/separator";
 import { Country } from "@/lib/types";
 import { retrieveProductDetailsOptimized } from "@/queries/product";
@@ -68,6 +70,16 @@ export default async function ProductVariantPage({
             text={[product.description, variant?.variantDescription || ""]}
           />
         </>
+
+        <Separator className="mt-6" />
+
+        {(specs.product || specs.variant) && <Specifications specs={specs} />}
+
+        <Separator className="mt-6" />
+
+        {product.questions && <Questions questions={product.questions} />}
+
+        <Separator className="mt-6" />
       </ProductPageContainer>
     </div>
   );
