@@ -1,3 +1,4 @@
+import Descriptions from "@/components/store/product-page/descriptions";
 import ProductPageContainer from "@/components/store/product-page/product-info/container";
 import RelatedProducts from "@/components/store/product-page/related-products";
 import { Separator } from "@/components/ui/separator";
@@ -57,6 +58,14 @@ export default async function ProductVariantPage({
             productId={product.id}
             categoryId={product.categoryId}
             subCategoryId={product.subCategoryId}
+          />
+        </>
+
+        <>
+          <Separator className="mt-6" />
+          {/* Product description */}
+          <Descriptions
+            text={[product.description, variant?.variantDescription || ""]}
           />
         </>
       </ProductPageContainer>
