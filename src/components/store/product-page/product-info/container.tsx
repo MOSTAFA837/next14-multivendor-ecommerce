@@ -65,7 +65,7 @@ export default function ProductPageContainer({
     variantName,
     image: images[0].url,
     variantImage,
-    sizeId,
+    sizeId: sizeId || "",
     size: "",
     quantity: 1,
     price: 0,
@@ -94,6 +94,8 @@ export default function ProductPageContainer({
       setIsProductValid(check);
     }
   }, [isProductValid, productToCart]);
+
+  // console.log("qty,stock", productToCart.quantity, productToCart.stock);
 
   return (
     <div className="relative">
@@ -126,6 +128,10 @@ export default function ProductPageContainer({
               store={productData.store}
               weight={weight}
               freeShipping={freeShipping}
+              sizeId={sizeId}
+              productToCart={productToCart}
+              handleChange={handleChange}
+              sizes={sizes}
             />
           </div>
         </div>

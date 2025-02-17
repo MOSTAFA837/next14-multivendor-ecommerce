@@ -1,4 +1,5 @@
 import {
+  CartProductType,
   Country,
   FreeShippingWithCountriesType,
   ShippingDetailsType,
@@ -7,8 +8,9 @@ import ShipTo from "./shipping/ship-to";
 import ShippingDetails from "./shipping/shipping-details";
 import { useEffect, useState } from "react";
 import { getShippingDetails } from "@/queries/product";
-import { Store } from "@prisma/client";
+import { Size, Store } from "@prisma/client";
 import ReturnPrivacy from "./return-privacy";
+import QuantitySelector from "./quantity-selector";
 
 interface ActionsProps {
   userCountry: Country;
@@ -16,6 +18,10 @@ interface ActionsProps {
   store: Store;
   weight: number;
   freeShipping: FreeShippingWithCountriesType | null;
+  sizeId?: string;
+  productToCart: CartProductType;
+  sizes: Size[];
+  handleChange: (property: keyof CartProductType, value: any) => void;
 }
 
 export default function Actions({
@@ -24,6 +30,10 @@ export default function Actions({
   store,
   weight,
   freeShipping,
+  sizeId,
+  productToCart,
+  sizes,
+  handleChange,
 }: ActionsProps) {
   const [shippingDetails, setShippingDetails] =
     useState<ShippingDetailsType | null>(null);
@@ -51,7 +61,7 @@ export default function Actions({
   }, [freeShipping, shippingFeeMethod, store, userCountry]);
 
   return (
-    <div className="bg-white border rounded-md overflow-hidden overflow-y-auto p-4 pb-0">
+    <div className="bg-white border rounded-md  overflow-y-auto p-4 pb-0">
       <>
         <ShipTo userCountry={userCountry} />
 
@@ -72,6 +82,22 @@ export default function Actions({
           loading={loading}
         />
       </>
+
+      <div className="mt-5 bg-white bottom-0 pb-4 space-y-3 sticky">
+        {sizeId && (
+          <div className="w-full flex justify-end mt-4">
+            <QuantitySelector
+              productId={productToCart.productId}
+              variantId={productToCart.variantId}
+              sizeId={productToCart.sizeId}
+              quantity={productToCart.quantity}
+              stock={productToCart.stock}
+              handleChange={handleChange}
+              sizes={sizes}
+            />
+          </div>
+        )}
+      </div>
     </div>
   );
 }
