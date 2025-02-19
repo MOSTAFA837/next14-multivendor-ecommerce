@@ -14,10 +14,12 @@ import {
   FreeShippingCountry,
   Prisma,
   ProductVariantImage,
+  Review,
   ShippingRate,
   Size,
   Spec,
   SubCategory,
+  User,
 } from "@prisma/client";
 
 import countries from "@/data/countries.json";
@@ -187,4 +189,19 @@ export type CartProductType = {
   deliveryTimeMin: number;
   deliveryTimeMax: number;
   isFreeShipping: boolean;
+};
+
+export type ReviewWithImageType = Review & {
+  user: User;
+};
+
+export type ReviewDetailsType = {
+  id: string;
+  review: string;
+  rating: number;
+  size: string;
+  quantity: string;
+  variant: string;
+  variantImage: string;
+  color: string;
 };

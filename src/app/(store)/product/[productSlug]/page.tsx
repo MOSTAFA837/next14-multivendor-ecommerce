@@ -3,7 +3,9 @@ import Descriptions from "@/components/store/product-page/descriptions";
 import ProductPageContainer from "@/components/store/product-page/product-info/container";
 import Questions from "@/components/store/product-page/questions";
 import RelatedProducts from "@/components/store/product-page/related-products";
+import Reviews from "@/components/store/product-page/reviews";
 import Specifications from "@/components/store/product-page/specifications";
+import StoreProducts from "@/components/store/product-page/store-products";
 import { Separator } from "@/components/ui/separator";
 import { Country } from "@/lib/types";
 import { retrieveProductDetailsOptimized } from "@/queries/product";
@@ -73,6 +75,15 @@ export default async function ProductVariantPage({
           />
         </>
 
+        <Separator className="mt-6" />
+
+        <Reviews
+          productId={product.id}
+          rating={product.rating}
+          variantsInfo={product.variants}
+          numReviews={product._count.reviews}
+        />
+
         <>
           <Separator className="mt-6" />
           {/* Product description */}
@@ -93,6 +104,12 @@ export default async function ProductVariantPage({
         <div className="h-6" />
 
         <StoreCard store={store} />
+
+        <StoreProducts
+          storeUrl={product.store.url}
+          storeName={product.store.name}
+          count={5}
+        />
       </ProductPageContainer>
     </div>
   );
