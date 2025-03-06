@@ -5,6 +5,8 @@ import {
   ProductPageType,
   ProductShippingDetailsType,
   ProductWithVariantType,
+  RatingStatisticsType,
+  SortOrder,
   VariantImageType,
   VariantSimplified,
 } from "@/lib/types";
@@ -458,7 +460,9 @@ export const getProductPageData = async (
     product.freeShipping
   );
 
-  return formatProductResponse(product, shippingDetails);
+  const retingStats = await getRatingStats(product.id);
+
+  return formatProductResponse(product, shippingDetails, retingStats);
 };
 
 export const retrieveProductDetailsOptimized = async (productSlug: string) => {
@@ -521,6 +525,59 @@ export const retrieveProductDetailsOptimized = async (productSlug: string) => {
   const userCountry = getUserCountry();
 
   return product;
+};
+
+export const getProductFilteredReviews = async (
+  productId: string,
+  filters: { rating?: number; hasImages?: boolean },
+  sort: { orderBy: "latest" | "oldest" | "highest" } | undefined,
+  page: number = 1,
+  pageSize: number = 4
+) => {
+  const reviewFilter: any = {
+    productId,
+  };
+
+  // Apply rating filter if provided
+  if (filters.rating) {
+    const rating = filters.rating;
+    reviewFilter.rating = {
+      in: [rating, rating + 0.5],
+    };
+  }
+
+  // Apply image filter if provided
+  if (filters.hasImages) {
+    reviewFilter.images = {
+      some: {},
+    };
+  }
+
+  // Set sorting order using local SortOrder type
+  const sortOption: { createdAt?: SortOrder; rating?: SortOrder } =
+    sort && sort.orderBy === "latest"
+      ? { createdAt: "desc" }
+      : sort && sort.orderBy === "oldest"
+      ? { createdAt: "asc" }
+      : { rating: "desc" };
+
+  // Calculate pagination parameters
+  const skip = (page - 1) * pageSize;
+  const take = pageSize;
+
+  const statistics = await getRatingStats(productId);
+  // Fetch reviews from the database
+  const reviews = await db.review.findMany({
+    where: reviewFilter,
+    include: {
+      user: true,
+    },
+    orderBy: sortOption,
+    skip, // Skip records for pagination
+    take, // Take records for pagination
+  });
+
+  return { reviews, statistics };
 };
 
 export const getRelatedProducts = async (
@@ -658,7 +715,8 @@ export const retrieveProductDetails = async (
 
 const formatProductResponse = async (
   product: ProductPageType,
-  shippingDetails: ProductShippingDetailsType
+  shippingDetails: ProductShippingDetailsType,
+  ratingStats: RatingStatisticsType
 ) => {
   if (!product) return;
 
@@ -704,11 +762,7 @@ const formatProductResponse = async (
     questions,
     rating: product.rating,
     reviews: [],
-    numReviews: 122,
-    reviewStatistics: {
-      ratingStatistics: [],
-      reviewsWithImageCount: 5,
-    },
+    reviewStats: ratingStats,
     shippingDetails,
     relatedProducts: [],
   };
@@ -817,4 +871,40 @@ export const getShippingDetails = async (
   }
 
   return false;
+};
+
+export const getRatingStats = async (productId: string) => {
+  const ratingStats = await db.review.groupBy({
+    by: ["rating"],
+    where: {
+      productId,
+    },
+    _count: {
+      rating: true,
+    },
+  });
+
+  const totalReviews = ratingStats.reduce(
+    (sum, stat) => sum + stat._count.rating,
+    0
+  );
+
+  const ratingCounts = Array(5).fill(0);
+
+  ratingStats.forEach((stat) => {
+    let rating = Math.floor(stat.rating);
+
+    if (rating >= 1 && rating <= 5) {
+      ratingCounts[rating - 1] = stat._count.rating;
+    }
+  });
+
+  return {
+    ratingStats: ratingCounts.map((count, index) => ({
+      rating: index + 1,
+      numReviews: count,
+      percentage: totalReviews > 0 ? (count / totalReviews) * 100 : 0,
+    })),
+    totalReviews,
+  };
 };

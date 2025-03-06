@@ -5,6 +5,7 @@ import Search from "./search.tsx";
 import { cookies } from "next/headers";
 import { Country } from "@/lib/types";
 import CountryLanguageCurrencySelector from "./country-lang-curr-selector";
+import { useRouter } from "next/navigation";
 
 export default function Header() {
   const cookieStore = cookies();
@@ -26,9 +27,9 @@ export default function Header() {
       <div className="h-full w-full lg:flex px-4 lg:px-12">
         <div className="flex lg:w-full lg:flex-1 flex-col lg:flex-row gap-3 py-3">
           <div className="flex items-center justify-between">
-            <Link href="/">
+            <a href="/">
               <h1 className="font-extrabold text-3xl font-mono">GoShop</h1>
-            </Link>
+            </a>
             <div className="flex lg:hidden">
               <Cart />
               <UserMenu />

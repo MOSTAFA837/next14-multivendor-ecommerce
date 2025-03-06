@@ -130,6 +130,7 @@ model Product {
   specs         Spec[]           @relation("ProductSpec")
   questions     Question[]       @relation("ProductQuestion")
   freeShipping FreeShipping? @relation("ProductFreeShipping")
+  freeShippingForAllCountries Boolean @default(false)
   reviews   Review[]         @relation("ReviewToProduct")
 
   @@index([storeId])

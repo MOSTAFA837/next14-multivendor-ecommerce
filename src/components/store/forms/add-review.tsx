@@ -2,6 +2,7 @@ import { Form, FormControl, FormField, FormItem } from "@/components/ui/form";
 import { AddReviewSchema } from "@/lib/schemas";
 import {
   ProductVariantDataType,
+  RatingStatisticsType,
   ReviewDetailsType,
   ReviewWithImageType,
 } from "@/lib/types";
@@ -25,6 +26,7 @@ interface AddReviewProps {
   reviews: ReviewWithImageType[];
   setReviews: Dispatch<SetStateAction<ReviewWithImageType[]>>;
   setAverageRating: Dispatch<SetStateAction<number>>;
+  setStatistics: Dispatch<SetStateAction<RatingStatisticsType>>;
 }
 
 export default function AddReview({
@@ -34,6 +36,7 @@ export default function AddReview({
   setReviews,
   reviews,
   setAverageRating,
+  setStatistics,
 }: AddReviewProps) {
   const [activeVariant, setActiveVariant] = useState<ProductVariantDataType>(
     variantsInfo[0]
@@ -102,6 +105,7 @@ export default function AddReview({
       if (response.review.id) {
         const review = reviews.filter((rev) => rev.id !== response.review.id);
         setReviews([...review, response.review]);
+        setStatistics(response.statistics);
         setAverageRating(response.rating);
         toast({
           title: "Review submitted",

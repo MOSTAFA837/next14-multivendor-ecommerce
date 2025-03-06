@@ -15,6 +15,7 @@ import {
   Prisma,
   ProductVariantImage,
   Review,
+  ShippingFeeMethod,
   ShippingRate,
   Size,
   Spec,
@@ -23,6 +24,7 @@ import {
 } from "@prisma/client";
 
 import countries from "@/data/countries.json";
+import { getRatingStats } from "@/queries/product";
 
 export interface DashboardSidebarMenuInterface {
   label: string;
@@ -45,19 +47,28 @@ export type ProductWithVariantType = {
   images: { id?: string; url: string }[];
   variantImage: string;
   categoryId: string;
+  offerTagId: string;
   subCategoryId: string;
   isSale: boolean;
   saleEndDate?: string;
-  offerTagId: string;
   brand: string;
   sku: string;
   weight: number;
-  colors: { color: string }[];
-  sizes: { size: string; quantity: number; price: number; discount: number }[];
-  keywords: string[];
+  colors: { id?: string; color: string }[];
+  sizes: {
+    id?: string;
+    size: string;
+    quantity: number;
+    price: number;
+    discount: number;
+  }[];
   product_specs: { id?: string; name: string; value: string }[];
   variant_specs: { id?: string; name: string; value: string }[];
+  keywords: string[];
   questions: { id?: string; question: string; answer: string }[];
+  freeShippingForAllCountries: boolean;
+  freeShippingCountriesIds: { id?: string; label: string; value: string }[];
+  shippingFeeMethod: ShippingFeeMethod;
   createdAt: Date;
   updatedAt: Date;
 };
@@ -205,3 +216,21 @@ export type ReviewDetailsType = {
   variantImage: string;
   color: string;
 };
+
+export type RatingStatisticsType = Prisma.PromiseReturnType<
+  typeof getRatingStats
+>;
+
+export type ReviewsFiltersType = {
+  rating?: number;
+};
+
+export type ReviewsOrderType = {
+  orderBy: "latest" | "oldest" | "highest";
+};
+
+export type StatisticsCardType = Prisma.PromiseReturnType<
+  typeof getRatingStats
+>["ratingStats"];
+
+export type SortOrder = "asc" | "desc";

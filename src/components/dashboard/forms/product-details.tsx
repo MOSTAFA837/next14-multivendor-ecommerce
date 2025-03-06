@@ -5,7 +5,13 @@ import { FC, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 
 // Prisma model
-import { Category, OfferTag, SubCategory } from "@prisma/client";
+import {
+  Category,
+  Country,
+  OfferTag,
+  ShippingFeeMethod,
+  SubCategory,
+} from "@prisma/client";
 
 // Form handling utilities
 import * as z from "zod";
@@ -76,11 +82,27 @@ import { ArrowRight, Dot } from "lucide-react";
 import { useTheme } from "next-themes";
 import { generateRandomSKU } from "@/lib/utils";
 
+const shippingFeeMethods = [
+  {
+    value: ShippingFeeMethod.ITEM,
+    description: "ITEM (Fees calculated based on number of products.)",
+  },
+  {
+    value: ShippingFeeMethod.WIGHT,
+    description: "WEIGHT (Fees calculated based on product weight)",
+  },
+  {
+    value: ShippingFeeMethod.FIXED,
+    description: "FIXED (Fees are fixed.)",
+  },
+];
+
 interface ProductDetailsProps {
   data?: Partial<ProductWithVariantType>;
   categories: Category[];
   offerTags: OfferTag[];
   storeUrl: string;
+  countries: Country[];
 }
 
 const ProductDetails: FC<ProductDetailsProps> = ({
@@ -88,6 +110,7 @@ const ProductDetails: FC<ProductDetailsProps> = ({
   categories,
   offerTags,
   storeUrl,
+  countries,
 }) => {
   // Initializing necessary hooks
   const { toast } = useToast(); // Hook for displaying toast messages
@@ -168,6 +191,8 @@ const ProductDetails: FC<ProductDetailsProps> = ({
       weight: data?.weight,
       saleEndDate:
         data?.saleEndDate || format(new Date(), "yyyy-MM-dd'T'HH:mm:ss"),
+      freeShippingForAllCountries: data?.freeShippingForAllCountries,
+      freeShippingCountriesIds: data?.freeShippingCountriesIds || [],
     },
   });
 
@@ -237,6 +262,9 @@ const ProductDetails: FC<ProductDetailsProps> = ({
           variant_specs: values.variant_specs,
           keywords: values.keywords,
           questions: values.questions,
+          shippingFeeMethod: values.shippingFeeMethod,
+          freeShippingForAllCountries: values.freeShippingForAllCountries,
+          freeShippingCountriesIds: values.freeShippingCountriesIds || [],
           createdAt: new Date(),
           updatedAt: new Date(),
         },
@@ -304,10 +332,23 @@ const ProductDetails: FC<ProductDetailsProps> = ({
   ]);
 
   //Countries options
-  type CountryOption = {
-    label: string;
-    value: string;
-  };
+  // type CountryOption = {
+  //   label: string;
+  //   value: string;
+  // };
+
+  // const countryOptions: CountryOption[] = countries.map((c) => ({
+  //   label: c.name,
+  //   value: c.id,
+  // }));
+
+  // console.log("countries", countries);
+
+  // const handleDeleteCountryFreeShipping = (index: number) => {
+  //   const currentValues = form.getValues().freeShippingCountriesIds;
+  //   const updatedValues = currentValues.filter((_, i) => i !== index);
+  //   form.setValue("freeShippingCountriesIds", updatedValues);
+  // };
 
   return (
     <AlertDialog>
@@ -938,6 +979,45 @@ const ProductDetails: FC<ProductDetailsProps> = ({
               </InputFieldset>
 
               {/* Shipping fee method */}
+              {!isNewVariantPage && (
+                <InputFieldset label="Product shipping fee method">
+                  <FormField
+                    disabled={isLoading}
+                    control={form.control}
+                    name="shippingFeeMethod"
+                    render={({ field }) => (
+                      <FormItem className="flex-1">
+                        <Select
+                          disabled={isLoading}
+                          onValueChange={field.onChange}
+                          value={field.value}
+                          defaultValue={field.value}
+                        >
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue
+                                defaultValue={field.value}
+                                placeholder="Select Shipping Fee Calculation method"
+                              />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {shippingFeeMethods.map((method) => (
+                              <SelectItem
+                                key={method.value}
+                                value={method.value}
+                              >
+                                {method.description}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </InputFieldset>
+              )}
 
               {/* Fee Shipping */}
 

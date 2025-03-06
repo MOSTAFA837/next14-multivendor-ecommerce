@@ -1,3 +1,4 @@
+import { ShippingFeeMethod } from "@prisma/client";
 import * as z from "zod";
 
 // Catgeory form schema
@@ -294,6 +295,21 @@ export const ProductFormSchema = z.object({
         message: "All product question inputs must be filled correctly.",
       }
     ),
+  freeShippingForAllCountries: z.boolean().default(false),
+  freeShippingCountriesIds: z
+    .object({
+      id: z.string().optional(),
+      label: z.string(),
+      value: z.string(),
+    })
+    .array()
+    .optional()
+    .refine(
+      (ids) => ids?.every((item) => item.label && item.value),
+      "All countries must have a label and a value."
+    )
+    .default([]),
+  shippingFeeMethod: z.nativeEnum(ShippingFeeMethod).default("FIXED"),
 });
 
 // Store shipping details

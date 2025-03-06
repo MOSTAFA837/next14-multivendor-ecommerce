@@ -15,6 +15,8 @@ export default async function SellerNewProductVariantPage({
   const categories = await getAllCategories();
   const offerTags = await getAllOfferTags();
   const product = await getProductMainInfo(params.productId);
+  const countries = await db.country.findMany({ orderBy: { name: "asc" } });
+
   if (!product || !categories) return null;
 
   return (
@@ -24,6 +26,7 @@ export default async function SellerNewProductVariantPage({
         storeUrl={params.storeUrl}
         data={product}
         offerTags={offerTags}
+        countries={countries || []}
       />
     </div>
   );
