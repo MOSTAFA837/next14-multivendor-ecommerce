@@ -9,7 +9,6 @@ export default function ReviewCard({
 }: {
   review: ReviewWithImageType;
 }) {
-  console.log(review);
   const { user } = review;
 
   const { name } = user;

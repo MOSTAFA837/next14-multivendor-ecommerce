@@ -1,3 +1,5 @@
+"use client";
+
 import {
   CartProductType,
   Country,
@@ -14,6 +16,8 @@ import ReturnPrivacy from "./return-privacy";
 import QuantitySelector from "./quantity-selector";
 import { cn } from "@/lib/utils";
 import SocialShare from "../shared/social-share";
+import { useCartStore } from "@/cart/useCart";
+import { toast } from "sonner";
 
 interface ActionsProps {
   userCountry: Country;
@@ -29,6 +33,7 @@ interface ActionsProps {
   productData: ProductDataType;
   variantSlug: string;
   variantName: string;
+  maxQty: number;
 }
 
 export default function Actions({
@@ -45,6 +50,7 @@ export default function Actions({
   productData,
   variantSlug,
   variantName,
+  maxQty,
 }: ActionsProps) {
   const [shippingDetails, setShippingDetails] =
     useState<ShippingDetailsType | null>(null);
@@ -70,6 +76,18 @@ export default function Actions({
 
     getShippingDetailsHandler();
   }, [freeShipping, shippingFeeMethod, store, userCountry]);
+
+  const addToCart = useCartStore((state) => state.addToCart);
+
+  const handleAddToCart = () => {
+    if (maxQty <= 0) return;
+
+    addToCart(productToCart);
+    toast.success("Product added to cart");
+  };
+
+  const cartItems = useCartStore((state) => state.cart);
+  // console.log("cart", cartItems);
 
   return (
     <div className="bg-white border rounded-md  overflow-y-auto p-4 pb-0">
@@ -111,7 +129,9 @@ export default function Actions({
 
         <button
           disabled={!isProductValid}
-          onClick={() => {}}
+          onClick={() => {
+            handleAddToCart();
+          }}
           className={cn(
             "relative w-full py-2.5 min-w-20 bg-orange-background hover:bg-orange-hover text-white h-11 rounded-3xl leading-6 inline-block font-bold whitespace-nowrap border border-orange-border cursor-pointer transition-all duration-300 ease-bezier-1 select-none"
             // ,
@@ -124,7 +144,8 @@ export default function Actions({
         </button>
 
         <button
-          disabled={!isProductValid}
+          // disabled={!isProductValid}
+          onClick={handleAddToCart}
           className={cn(
             "relative w-full py-2.5 min-w-20 bg-orange-border hover:bg-[#e4cdce] text-orange-hover h-11 rounded-3xl leading-6 inline-block font-bold whitespace-nowrap border border-orange-border cursor-pointer transition-all duration-300 ease-bezier-1 select-none"
             // ,
@@ -132,7 +153,6 @@ export default function Actions({
             //   "cursor-not-allowed": !isProductValid,
             // }
           )}
-          onClick={() => {}}
         >
           <span>Add to cart</span>
         </button>

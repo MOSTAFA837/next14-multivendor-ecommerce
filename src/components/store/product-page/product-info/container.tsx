@@ -6,11 +6,13 @@ import {
   ProductDataType,
   ProductVariantDataType,
 } from "@/lib/types";
-import { ReactNode, useEffect, useState } from "react";
+import { ReactNode, useEffect, useMemo, useState } from "react";
 import ProductSwiper from "./swiper";
 import ProductInfo from "./info";
 import Actions from "../actions";
 import { isProductValidToAdd } from "@/lib/utils";
+import { useCartStore } from "@/cart/useCart";
+import useFromStore from "@/hooks/useFromStore";
 
 interface ProductPageContainerProps {
   productData: ProductDataType;
@@ -95,6 +97,46 @@ export default function ProductPageContainer({
     }
   }, [isProductValid, productToCart]);
 
+  useEffect(() => {
+    setProductToCart((prevProduct) => ({
+      ...prevProduct,
+      productId: id,
+      variantId,
+      productSlug: slug,
+      variantSlug: variant.slug,
+      name: productData.name,
+      variantName: variantName,
+      image: images[0].url,
+      variantImage: variantImage,
+      stock: variant.sizes.find((s) => s.id === sizeId)?.quantity || 1,
+      weight: weight,
+    }));
+  }, [
+    id,
+    slug,
+    variantSlug,
+    variant,
+    productData,
+    variantName,
+    variantImage,
+    weight,
+    images,
+    sizeId,
+    variantId,
+  ]);
+
+  const cartItems = useFromStore(useCartStore, (state) => state.cart);
+
+  const maxQty = useMemo(() => {
+    const search_product = cartItems?.find(
+      (p) =>
+        p.productId === id && p.variantId === variantId && p.sizeId === sizeId
+    );
+    return search_product
+      ? search_product.stock - search_product.quantity
+      : productToCart.stock;
+  }, [cartItems, productToCart.stock, id, variantId, sizeId]);
+
   return (
     <div className="relative">
       <div className="w-full xl:flex xl:gap-4">
@@ -134,6 +176,7 @@ export default function ProductPageContainer({
               productData={productData}
               variantSlug={variantSlug}
               variantName={variantName}
+              maxQty={maxQty}
             />
           </div>
         </div>

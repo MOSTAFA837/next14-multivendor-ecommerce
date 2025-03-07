@@ -54,8 +54,6 @@ export const upsertProduct = async (
       where: { id: product.variantId },
     });
 
-    console.log(product);
-
     if (existingProduct) {
       if (existingVariant) {
         // Create new variant
@@ -607,8 +605,6 @@ export const getRelatedProducts = async (
 
   let relatedProducts = subCategoryProducts;
 
-  console.log(relatedProducts);
-
   if (relatedProducts.length < 6) {
     const remainCount = 6 - relatedProducts.length;
     const categoryProducts = await db.product.findMany({
@@ -856,7 +852,7 @@ export const getShippingDetails = async (
           : shippingFeeForAdditionalItem;
         break;
 
-      case "WEIGHT":
+      case "WIGHT":
         shippingDetails.shippingFee = isFreeShipping ? 0 : shippingFeePerKg;
         break;
 

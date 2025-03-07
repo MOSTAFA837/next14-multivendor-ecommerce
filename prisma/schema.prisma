@@ -29,6 +29,7 @@ model User {
   stores    Store[]  @relation("UserStores")
   following Store[] @relation("UserFollowingStore")
   reviews           Review[]          @relation("ReviewToUser")
+  cart Cart? @relation("UserCart")
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
@@ -93,6 +94,7 @@ model Store {
   deliveryTimeMax              Int         @default(31)
   shippingRates ShippingRate[] @relation("StoreShippingRates")
   followers User[]   @relation("UserFollowingStore")
+    cartItems     CartItem[]     @relation("CartItemToStore")
   createdAt DateTime @default(now())
   updatedAt DateTime @default(now()) @updatedAt
 
@@ -319,4 +321,44 @@ model Review {
   @@index([productId])
 }
 
+model Cart {
+  id String @id @default(uuid())
+  userId String @unique
+  user  User   @relation("UserCart", fields: [userId], references: [id])
+  shippingFees Float
+  subTotal Float
+  total Float
+  items CartItem[] @relation("CartToCartItem")
 
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model CartItem {
+  id          String @id @default(uuid())
+  productId   String
+  variantId   String
+  sizeId      String
+  productSlug String
+  variantSlug String
+  sku         String
+  name        String
+  image       String
+  size        String
+  price       Float
+  quantity    Int    @default(1)
+  shippingFee Float  @default(0)
+  totalPrice  Float
+
+  cartId String
+  cart   Cart   @relation("CartToCartItem", fields: [cartId], references: [id], onDelete: Cascade)
+
+  storeId String
+  store   Store  @relation("CartItemToStore", fields: [storeId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([cartId])
+  @@index([storeId])
+}

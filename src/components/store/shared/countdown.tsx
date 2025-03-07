@@ -15,7 +15,6 @@ export default function Countdown({ targetDate }: CountdownProps) {
 
   useEffect(() => {
     const targetTime = new Date(targetDate).getTime();
-    console.log(targetTime);
 
     const calculateTimeLeft = () => {
       const now = new Date().getTime();

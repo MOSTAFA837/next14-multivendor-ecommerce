@@ -73,7 +73,7 @@ export const upsertReview = async (
 
     const statistics = await getRatingStats(productId);
 
-    console.log(statistics);
+    // console.log(statistics);
 
     const message = existingReview
       ? "Your review has been updated successfully!"
