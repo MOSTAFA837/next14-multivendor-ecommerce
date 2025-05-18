@@ -12,9 +12,17 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { Dispatch, SetStateAction, useRef, useState } from "react";
+import {
+  Dispatch,
+  FC,
+  SetStateAction,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
+import toast from "react-hot-toast";
 
-interface CartProductProps {
+interface Props {
   product: CartProductType;
   selectedItems: CartProductType[];
   setSelectedItems: Dispatch<SetStateAction<CartProductType[]>>;
@@ -22,13 +30,13 @@ interface CartProductProps {
   userCountry: Country;
 }
 
-export default function CartProduct({
+const CartProduct: FC<Props> = ({
   product,
   selectedItems,
   setSelectedItems,
   setTotalShipping,
   userCountry,
-}: CartProductProps) {
+}) => {
   const {
     productId,
     variantId,
@@ -53,6 +61,10 @@ export default function CartProduct({
   const prevShippingFeeRef = useRef(shippingFee);
   const prevUserCountryRef = useRef(userCountry);
 
+  const unique_id = `${productId}-${variantId}-${sizeId}`;
+
+  const totalPrice = price * quantity;
+
   const [shippingInfo, setShippingInfo] = useState({
     initialFee: 0,
     extraFee: 0,
@@ -62,12 +74,13 @@ export default function CartProduct({
     shippingService: shippingService,
   });
 
-  const calculateShipping = (newQty: number) => {
+  // Function to calculate shipping fee
+  const calculateShipping = (newQty?: number) => {
     let initialFee = 0;
     let extraFee = 0;
     let totalFee = 0;
 
-    const quantityToUse = newQty !== undefined ? newQty : quantity;
+    const quantityToUse = newQty !== undefined ? newQty : quantity; // Use newQty if passed, else fallback to current quantity
 
     if (shippingMethod === "ITEM") {
       initialFee = shippingFee;
@@ -79,12 +92,14 @@ export default function CartProduct({
       totalFee = shippingFee;
     }
 
+    // Subtract the previous shipping total for this product before updating
     if (stock > 0) {
       setTotalShipping(
         (prevTotal) => prevTotal - shippingInfo.totalFee + totalFee
       );
     }
 
+    // Update state
     setShippingInfo({
       initialFee,
       extraFee,
@@ -95,42 +110,68 @@ export default function CartProduct({
     });
   };
 
-  const { updateProductQuantity, removeFromCart } = useCartStore(
-    (state) => state
-  );
+  // Recalculate shipping fees whenever quantity, country or fees changes
+  useEffect(() => {
+    if (
+      shippingFee !== prevShippingFeeRef.current ||
+      userCountry !== prevUserCountryRef.current
+    ) {
+      calculateShipping();
+    }
 
-  const unique_id = `${productId}-${variantId}-${sizeId}`;
+    // Update refs after calculating shipping
+    prevShippingFeeRef.current = shippingFee;
+    prevUserCountryRef.current = userCountry;
+
+    // Add a check to recalculate shipping fee on component load (after a refresh)
+    if (!shippingInfo.totalFee) {
+      calculateShipping();
+    }
+  }, [quantity, shippingFee, userCountry, shippingInfo.totalFee, stock]);
 
   const selected = selectedItems.find(
     (p) => unique_id === `${p.productId}-${p.variantId}-${p.sizeId}`
   );
 
-  const totalPrice = price * quantity;
+  const { updateProductQuantity, removeFromCart } = useCartStore(
+    (state) => state
+  );
 
   const handleSelectProduct = () => {
     setSelectedItems((prev) => {
-      const isExists = prev.some(
+      const exists = prev.some(
         (item) =>
           item.productId === product.productId &&
           item.variantId === product.variantId &&
           item.sizeId === product.sizeId
       );
-
-      return isExists
-        ? prev.filter((item) => item !== product)
-        : [...prev, product];
+      return exists
+        ? prev.filter((item) => item !== product) // Remove if exists
+        : [...prev, product]; // Add if not exists
     });
   };
 
-  const updateProductQtyHandler = (type: "add" | "remove") => {
+  const updateProductQuantityHandler = (type: "add" | "remove") => {
     if (type === "add" && quantity < stock) {
+      // Increase quantity by 1 but ensure it doesn't exceed stock
       updateProductQuantity(product, quantity + 1);
       calculateShipping(quantity + 1);
-    } else if (type === "remove") {
+    } else if (type === "remove" && quantity > 1) {
+      // Decrease quantity by 1 but ensure it doesn't go below 1
       updateProductQuantity(product, quantity - 1);
       calculateShipping(quantity - 1);
     }
   };
+
+  // Handle add product to wishlist
+  // const handleaddToWishlist = async () => {
+  //   try {
+  //     const res = await addToWishlist(productId, variantId, sizeId);
+  //     if (res) toast.success("Product successfully added to wishlist.");
+  //   } catch (error: any) {
+  //     toast.error(error.toString());
+  //   }
+  // };
 
   return (
     <div
@@ -140,6 +181,7 @@ export default function CartProduct({
     >
       <div className="py-4">
         <div className="relative flex self-start">
+          {/* Image */}
           <div className="flex items-center">
             {stock > 0 && (
               <label
@@ -162,7 +204,6 @@ export default function CartProduct({
                     )}
                   </span>
                 </span>
-
                 <input
                   type="checkbox"
                   id={unique_id}
@@ -171,7 +212,6 @@ export default function CartProduct({
                 />
               </label>
             )}
-
             <Link href={`/product/${productSlug}?variant=${variantSlug}`}>
               <div className="m-0 mr-4 ml-2 w-28 h-28 bg-gray-200 relative rounded-lg">
                 <Image
@@ -184,7 +224,6 @@ export default function CartProduct({
               </div>
             </Link>
           </div>
-
           {/* Info */}
           <div className="w-0 min-w-0 flex-1">
             {/* Title - Actions */}
@@ -204,13 +243,12 @@ export default function CartProduct({
                 </span>
                 <span
                   className="cursor-pointer inline-block"
-                  onClick={() => {}}
+                  onClick={() => removeFromCart(product)}
                 >
                   <Trash className="w-4 hover:stroke-orange-seconadry" />
                 </span>
               </div>
             </div>
-
             {/* Style - size */}
             <div className="my-1">
               <button className="text-main-primary relative h-[24px] bg-gray-100 whitespace-normal px-2.5 py-0 max-w-full text-xs leading-4 rounded-xl font-bold cursor-pointer  outline-0">
@@ -224,7 +262,6 @@ export default function CartProduct({
                 </span>
               </button>
             </div>
-
             {/* Price - Delivery */}
             <div className="flex flex-col gap-y-2 sm:flex-row sm:items-center sm:justify-between mt-2 relative">
               {stock > 0 ? (
@@ -240,17 +277,15 @@ export default function CartProduct({
                   </span>
                 </div>
               )}
-
               {/* Quantity changer */}
               <div className="text-xs">
                 <div className="text-gray-900 text-sm leading-6 list-none inline-flex items-center">
                   <div
                     className="w-6 h-6 text-xs bg-gray-100 hover:bg-gray-200 leading-6 grid place-items-center rounded-full cursor-pointer"
-                    onClick={() => updateProductQtyHandler("remove")}
+                    onClick={() => updateProductQuantityHandler("remove")}
                   >
                     <Minus className="w-3 stroke-[#555]" />
                   </div>
-
                   <input
                     type="text"
                     value={quantity}
@@ -258,57 +293,55 @@ export default function CartProduct({
                     max={stock}
                     className="m-1 h-6 w-[32px] bg-transparent border-none leading-6 tracking-normal text-center outline-none text-gray-900 font-bold"
                   />
-
                   <div
                     className="w-6 h-6 text-xs bg-gray-100 hover:bg-gray-200 leading-6 grid place-items-center rounded-full cursor-pointer"
-                    onClick={() => updateProductQtyHandler("add")}
+                    onClick={() => updateProductQuantityHandler("add")}
                   >
                     <Plus className="w-3 stroke-[#555]" />
                   </div>
                 </div>
               </div>
-
-              {/* Shipping info */}
-              {stock > 0 && (
-                <div className="mt-1 text-xs text-[#999] cursor-pointer">
-                  <div className="flex items-center mb-1">
-                    <span>
-                      <Truck className="w-4 inline-block text-[#01A971]" />
-                      {shippingInfo.totalFee > 0 ? (
-                        <span className="text-[#01A971] ml-1">
-                          {shippingMethod === "ITEM" ? (
-                            <>
-                              ${shippingInfo.initialFee} (first item)
-                              {quantity > 1
-                                ? `+ 
+            </div>
+            {/* Shipping info */}
+            {stock > 0 && (
+              <div className="mt-1 text-xs text-[#999] cursor-pointer">
+                <div className="flex items-center mb-1">
+                  <span>
+                    <Truck className="w-4 inline-block text-[#01A971]" />
+                    {shippingInfo.totalFee > 0 ? (
+                      <span className="text-[#01A971] ml-1">
+                        {shippingMethod === "ITEM" ? (
+                          <>
+                            ${shippingInfo.initialFee} (first item)
+                            {quantity > 1
+                              ? `+ 
                               ${quantity - 1} item(s) x $${extraShippingFee} 
                               (additional items)`
-                                : " x 1"}
-                              = ${shippingInfo.totalFee.toFixed(2)}
-                            </>
-                          ) : shippingMethod === "WEIGHT" ? (
-                            <>
-                              ${shippingFee} x {shippingInfo.weight}kg x&nbsp;
-                              {quantity} {quantity > 1 ? "items" : "item"} = $
-                              {shippingInfo.totalFee.toFixed(2)}
-                            </>
-                          ) : (
-                            <>Fixed Fee : ${shippingInfo.totalFee.toFixed(2)}</>
-                          )}
-                        </span>
-                      ) : (
-                        <span className="text-[#01A971] ml-1">
-                          Free Delivery
-                        </span>
-                      )}
-                    </span>
-                  </div>
+                              : " x 1"}
+                            = ${shippingInfo.totalFee.toFixed(2)}
+                          </>
+                        ) : shippingMethod === "WEIGHT" ? (
+                          <>
+                            ${shippingFee} x {shippingInfo.weight}kg x&nbsp;
+                            {quantity} {quantity > 1 ? "items" : "item"} = $
+                            {shippingInfo.totalFee.toFixed(2)}
+                          </>
+                        ) : (
+                          <>Fixed Fee : ${shippingInfo.totalFee.toFixed(2)}</>
+                        )}
+                      </span>
+                    ) : (
+                      <span className="text-[#01A971] ml-1">Free Delivery</span>
+                    )}
+                  </span>
                 </div>
-              )}
-            </div>
+              </div>
+            )}
           </div>
         </div>
       </div>
     </div>
   );
-}
+};
+
+export default CartProduct;

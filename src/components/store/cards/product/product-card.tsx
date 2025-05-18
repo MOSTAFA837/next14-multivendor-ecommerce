@@ -56,7 +56,7 @@ export default function ProductCard({ product }: ProductCardProps) {
               </div>
             )}
 
-            <ProductPrice sizes={sizes} isCard />
+            <ProductPrice sizes={sizes} isCard handleChange={() => {}} />
           </Link>
         </div>
 

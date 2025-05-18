@@ -1,26 +1,21 @@
-import Link from "next/link";
 import UserMenu from "./user-menu";
 import Cart from "./cart";
 import Search from "./search.tsx";
-import { cookies } from "next/headers";
-import { Country } from "@/lib/types";
-import CountryLanguageCurrencySelector from "./country-lang-curr-selector";
-import { useRouter } from "next/navigation";
 
 export default function Header() {
-  const cookieStore = cookies();
-  const userCountryCookie = cookieStore.get("userCountry");
+  // const cookieStore = cookies();
+  // const userCountryCookie = cookieStore.get("userCountry");
 
-  let userCountry: Country = {
-    name: "United States",
-    city: "",
-    code: "US",
-    region: "",
-  };
+  // let userCountry: Country = {
+  //   name: "United States",
+  //   city: "",
+  //   code: "US",
+  //   region: "",
+  // };
 
-  if (userCountryCookie) {
-    userCountry = JSON.parse(userCountryCookie.value) as Country;
-  }
+  // if (userCountryCookie) {
+  //   userCountry = JSON.parse(userCountryCookie.value) as Country;
+  // }
 
   return (
     <div className="bg-gradient-to-r from-gray-100 to-gray-200">
@@ -40,7 +35,7 @@ export default function Header() {
         </div>
 
         <div className="hidden lg:flex w-full lg:w-fit lg:mt-2 justify-end mt-1.5 pl-6">
-          <CountryLanguageCurrencySelector userCountry={userCountry} />
+          {/* <CountryLanguageCurrencySelector userCountry={userCountry} /> */}
           <UserMenu />
           <Cart />
         </div>

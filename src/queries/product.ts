@@ -904,3 +904,48 @@ export const getRatingStats = async (productId: string) => {
     totalReviews,
   };
 };
+
+export const getDeliveryDetailsForStoreByCountry = async (
+  storeId: string,
+  countryId: string
+) => {
+  // Get shipping rate
+  const shippingRate = await db.shippingRate.findFirst({
+    where: {
+      countryId,
+      storeId,
+    },
+  });
+
+  let storeDetails;
+  if (!shippingRate) {
+    storeDetails = await db.store.findUnique({
+      where: {
+        id: storeId,
+      },
+      select: {
+        shippingService: true,
+        deliveryTimeMin: true,
+        deliveryTimeMax: true,
+      },
+    });
+  }
+
+  const shippingService = shippingRate
+    ? shippingRate.shippingService
+    : storeDetails?.shippingService;
+
+  const deliveryTimeMin = shippingRate
+    ? shippingRate.deliveryTimeMin
+    : storeDetails?.deliveryTimeMin;
+
+  const deliveryTimeMax = shippingRate
+    ? shippingRate.deliveryTimeMax
+    : storeDetails?.deliveryTimeMax;
+
+  return {
+    shippingService,
+    deliveryTimeMin,
+    deliveryTimeMax,
+  };
+};

@@ -9,12 +9,16 @@ import {
 import { getStoreShippingDetails } from "@/queries/store";
 import { getAllSubCategories } from "@/queries/subCategory";
 import {
+  Cart,
+  CartItem,
   Category,
   FreeShipping,
   FreeShippingCountry,
   Prisma,
+  Country as CountryPrisma,
   ProductVariantImage,
   Review,
+  ShippingAddress,
   ShippingFeeMethod,
   ShippingRate,
   Size,
@@ -234,3 +238,12 @@ export type StatisticsCardType = Prisma.PromiseReturnType<
 >["ratingStats"];
 
 export type SortOrder = "asc" | "desc";
+
+export type CartWithCartItemsType = Cart & {
+  items: CartItem[];
+};
+
+export type UserShippingAddressType = ShippingAddress & {
+  country: CountryPrisma;
+  user: User;
+};

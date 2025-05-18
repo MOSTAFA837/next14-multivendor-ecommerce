@@ -3,8 +3,8 @@ import { FC, useState } from "react";
 import { Button } from "../ui/button";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
-// import { saveUserCart } from "@/queries/user";
 import { PulseLoader } from "react-spinners";
+import { saveUserCart } from "@/queries/user";
 
 interface Props {
   cartItems: CartProductType[];
@@ -26,8 +26,9 @@ const CartSummary: FC<Props> = ({ cartItems, shippingFees }) => {
   const handleSaveCart = async () => {
     try {
       setLoading(true);
-      // const res = await saveUserCart(cartItems);
-      // if (res) router.push("/checkout");
+      const res = await saveUserCart(cartItems);
+      console.log(res);
+      if (res) router.push("/checkout");
       setLoading(false);
     } catch (error: any) {
       toast.error(error.toString());

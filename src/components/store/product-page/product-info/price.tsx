@@ -33,19 +33,16 @@ const ProductPrice: FC<Props> = ({
     if (sizes && sizes.length > 0) {
       if (sizeId) {
         const foundSize = sizes.find((size) => size.id === sizeId);
-
         if (foundSize) {
           setSelectedSize(foundSize);
-
           const discountedPrice =
             foundSize.price * (1 - foundSize.discount / 100);
-
           handleChange("price", discountedPrice);
           handleChange("stock", foundSize.quantity);
         }
       }
     }
-  }, [handleChange, sizeId, sizes]);
+  }, [sizeId, sizes]);
 
   // If no sizeId passed, calculate range of prices and total quantity
   if (!sizeId && sizes && sizes.length > 0) {

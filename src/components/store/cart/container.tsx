@@ -4,15 +4,14 @@ import { useCartStore } from "@/cart/useCart";
 import useFromStore from "@/hooks/useFromStore";
 import { CartProductType, Country } from "@/lib/types";
 import EmptyCart from "./empty-cart";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import CountryNote from "../shared/country-note";
 import CartProduct from "../cards/cart-product";
 import CartHeader from "./header";
 import CartSummary from "./summary";
 import FastDelivery from "../cards/fast-delivery";
-import ReturnPrivacy, {
-  SecurityPrivacyCard,
-} from "../product-page/return-privacy";
+import { SecurityPrivacyCard } from "../product-page/return-privacy";
+import { updateCartWithLatest } from "@/queries/user";
 
 export default function CartContainer({
   userCountry,
@@ -20,9 +19,42 @@ export default function CartContainer({
   userCountry: Country;
 }) {
   const cartItems = useFromStore(useCartStore, (state) => state.cart) || [];
+  const setCart = useCartStore((state) => state.setCart);
 
   const [selectedItems, setSelectedItems] = useState<CartProductType[]>([]);
   const [totalShipping, setTotalShipping] = useState<number>(0);
+
+  const [loading, setLoading] = useState<boolean>(false);
+  const [isCartLoaded, setIsCartLoaded] = useState<boolean>(false);
+
+  // Ref to track if the component has mounted
+  const hasMounted = useRef(false);
+
+  useEffect(() => {
+    if (cartItems !== undefined) {
+      setIsCartLoaded(true); // Flag indicating cartItems has finished loading
+    }
+  }, [cartItems]);
+
+  useEffect(() => {
+    const loadAndSyncCart = async () => {
+      try {
+        setLoading(true);
+        const updatedCart = await updateCartWithLatest(cartItems);
+        setCart(updatedCart);
+        setLoading(false);
+      } catch (error) {
+        setLoading(false);
+      }
+    };
+
+    // Run only when userCountry changes and after the initial mount
+    if (hasMounted.current && cartItems?.length) {
+      loadAndSyncCart();
+    } else {
+      hasMounted.current = true; // Set the ref to true after the first render
+    }
+  }, [userCountry]);
 
   return (
     <div>
