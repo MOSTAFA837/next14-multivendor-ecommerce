@@ -18,6 +18,8 @@ import { cn } from "@/lib/utils";
 import SocialShare from "../shared/social-share";
 import { useCartStore } from "@/cart/useCart";
 import { toast } from "sonner";
+import { addToWishList, checkIfAddedToWishlist } from "@/queries/user";
+import { Heart } from "lucide-react";
 
 interface ActionsProps {
   userCountry: Country;
@@ -33,6 +35,8 @@ interface ActionsProps {
   productData: ProductDataType;
   variantSlug: string;
   variantName: string;
+  productId: string;
+  variantId: string;
   maxQty: number;
 }
 
@@ -51,6 +55,8 @@ export default function Actions({
   variantSlug,
   variantName,
   maxQty,
+  productId,
+  variantId,
 }: ActionsProps) {
   const [shippingDetails, setShippingDetails] =
     useState<ShippingDetailsType | null>(null);
@@ -88,6 +94,34 @@ export default function Actions({
 
   const cartItems = useCartStore((state) => state.cart);
   // console.log("cart", cartItems);
+
+  const [isAddedToWishlist, setIsAddedToWishlist] = useState(false);
+
+  // Handle add product to wishlist
+  const handleaddToWishlist = async () => {
+    try {
+      const res = await addToWishList(productId, variantId, sizeId);
+      toast.success(res.message);
+      if (res.id) {
+        setIsAddedToWishlist(true);
+      } else {
+        setIsAddedToWishlist(false);
+      }
+    } catch (error: any) {
+      toast.error(error.toString());
+    }
+  };
+
+  useEffect(() => {
+    if (!productId || !variantId || !sizeId) return;
+
+    const checkWishlist = async () => {
+      const res = await checkIfAddedToWishlist(productId, variantId, sizeId);
+      setIsAddedToWishlist(res);
+    };
+
+    checkWishlist();
+  }, [productId, sizeId, variantId]);
 
   return (
     <div className="bg-white border rounded-md  overflow-y-auto p-4 pb-0">
@@ -128,30 +162,37 @@ export default function Actions({
         )}
 
         <button
-          disabled={!isProductValid}
+          onClick={() => handleaddToWishlist()}
+          className={cn(
+            "relative w-full flex items-center justify-center gap-x-4 py-2.5 min-w-20 bg-white hover:bg-orange-hover/70 text-orange-background border-orange-background  h-11 rounded-3xl leading-6 font-bold whitespace-nowrap border hover:text-white cursor-pointer transition-all duration-300 ease-bezier-1 select-none"
+          )}
+        >
+          <Heart
+            className={cn("", {
+              "stroke-orange-seconadry fill-orange-seconadry":
+                isAddedToWishlist,
+            })}
+          />
+          <span>
+            {isAddedToWishlist ? "Added to wishlist" : "Add to wishlist"}
+          </span>
+        </button>
+
+        <button
           onClick={() => {
             handleAddToCart();
           }}
           className={cn(
             "relative w-full py-2.5 min-w-20 bg-orange-background hover:bg-orange-hover text-white h-11 rounded-3xl leading-6 inline-block font-bold whitespace-nowrap border border-orange-border cursor-pointer transition-all duration-300 ease-bezier-1 select-none"
-            // ,
-            // {
-            //   "cursor-not-allowed": !isProductValid,
-            // }
           )}
         >
           <span>Buy now</span>
         </button>
 
         <button
-          // disabled={!isProductValid}
           onClick={handleAddToCart}
           className={cn(
             "relative w-full py-2.5 min-w-20 bg-orange-border hover:bg-[#e4cdce] text-orange-hover h-11 rounded-3xl leading-6 inline-block font-bold whitespace-nowrap border border-orange-border cursor-pointer transition-all duration-300 ease-bezier-1 select-none"
-            // ,
-            // {
-            //   "cursor-not-allowed": !isProductValid,
-            // }
           )}
         >
           <span>Add to cart</span>

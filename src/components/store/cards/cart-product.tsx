@@ -1,6 +1,7 @@
 import { useCartStore } from "@/cart/useCart";
 import { CartProductType, Country } from "@/lib/types";
 import { cn } from "@/lib/utils";
+import { addToWishList, checkIfAddedToWishlist } from "@/queries/user";
 import {
   Check,
   ChevronRight,
@@ -20,7 +21,7 @@ import {
   useRef,
   useState,
 } from "react";
-import toast from "react-hot-toast";
+import { toast } from "sonner";
 
 interface Props {
   product: CartProductType;
@@ -163,15 +164,33 @@ const CartProduct: FC<Props> = ({
     }
   };
 
+  const [isAddedToWishlist, setIsAddedToWishlist] = useState(false);
+
   // Handle add product to wishlist
-  // const handleaddToWishlist = async () => {
-  //   try {
-  //     const res = await addToWishlist(productId, variantId, sizeId);
-  //     if (res) toast.success("Product successfully added to wishlist.");
-  //   } catch (error: any) {
-  //     toast.error(error.toString());
-  //   }
-  // };
+  const handleaddToWishlist = async () => {
+    try {
+      const res = await addToWishList(productId, variantId, sizeId);
+      toast.success(res.message);
+      if (res.id) {
+        setIsAddedToWishlist(true);
+      } else {
+        setIsAddedToWishlist(false);
+      }
+    } catch (error: any) {
+      toast.error(error.toString());
+    }
+  };
+
+  useEffect(() => {
+    if (!productId || !variantId || !sizeId) return;
+
+    const checkWishlist = async () => {
+      const res = await checkIfAddedToWishlist(productId, variantId, sizeId);
+      setIsAddedToWishlist(res);
+    };
+
+    checkWishlist();
+  }, [productId, sizeId, variantId]);
 
   return (
     <div
@@ -237,9 +256,14 @@ const CartProduct: FC<Props> = ({
               <div className="absolute top-0 right-0">
                 <span
                   className="mr-2.5 cursor-pointer inline-block"
-                  onClick={() => {}}
+                  onClick={() => handleaddToWishlist()}
                 >
-                  <Heart className="w-4 hover:stroke-orange-seconadry" />
+                  <Heart
+                    className={cn("w-4", {
+                      "stroke-orange-seconadry fill-orange-seconadry":
+                        isAddedToWishlist,
+                    })}
+                  />
                 </span>
                 <span
                   className="cursor-pointer inline-block"

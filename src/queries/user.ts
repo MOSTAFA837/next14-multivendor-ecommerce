@@ -727,3 +727,68 @@ export const updateCartWithLatest = async (
   );
   return validatedCartItems;
 };
+
+export const addToWishList = async (
+  productId: string,
+  variantId: string,
+  sizeId?: string
+) => {
+  const user = await currentUser();
+  if (!user) throw new Error("Unauthenticated.");
+  const userId = user.id;
+
+  try {
+    const existingWIshlistItem = await db.wishlist.findFirst({
+      where: {
+        userId,
+        productId,
+        variantId,
+      },
+    });
+
+    if (existingWIshlistItem) {
+      await db.wishlist.delete({
+        where: {
+          id: existingWIshlistItem.id,
+        },
+      });
+
+      return {
+        message: "Product removed from wishlist",
+      };
+    } else {
+      const wishlist = await db.wishlist.create({
+        data: {
+          userId,
+          productId,
+          variantId,
+          sizeId,
+        },
+      });
+
+      return {
+        message: "Product added to wishlist",
+        id: wishlist.id,
+      };
+    }
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const checkIfAddedToWishlist = async (
+  productId: string,
+  variantId: string,
+  sizeId: string
+): Promise<boolean> => {
+  const addedToWishlist = await db.wishlist.findFirst({
+    where: {
+      productId,
+      variantId,
+      sizeId,
+    },
+  });
+
+  if (addedToWishlist) return true;
+  return false;
+};

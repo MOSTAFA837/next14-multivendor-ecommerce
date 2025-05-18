@@ -211,6 +211,8 @@ export default function ProductPageContainer({
               variantSlug={variantSlug}
               variantName={variantName}
               maxQty={maxQty}
+              productId={id}
+              variantId={variantId}
             />
           </div>
         </div>
