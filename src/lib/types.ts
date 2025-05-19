@@ -250,3 +250,9 @@ export type UserShippingAddressType = ShippingAddress & {
   country: CountryPrisma;
   user: User;
 };
+
+export interface SearchResult {
+  name: string;
+  link: string;
+  image: string;
+}
