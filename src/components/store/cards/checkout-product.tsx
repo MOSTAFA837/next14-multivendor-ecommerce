@@ -5,9 +5,10 @@ import Link from "next/link";
 
 interface Props {
   product: CartItem;
+  isDiscounted: boolean;
 }
 
-export default function CheckoutProductCard({ product }: Props) {
+export default function CheckoutProductCard({ product, isDiscounted }: Props) {
   const { productSlug, variantSlug, sizeId, shippingFee } = product;
 
   return (
@@ -63,11 +64,11 @@ export default function CheckoutProductCard({ product }: Props) {
                   <span className="inline-block break-all">
                     ${product.price.toFixed(2)} x {product.quantity}
                   </span>
-                  {/* {isDiscounted && (
+                  {isDiscounted && (
                     <span className="text-xs font-normal text-orange-background">
                       (Coupon applied)
                     </span>
-                  )} */}
+                  )}
                 </div>
               </div>
               {/* Shipping fee */}

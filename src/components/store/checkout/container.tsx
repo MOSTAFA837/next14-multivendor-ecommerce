@@ -7,10 +7,11 @@ import {
 } from "@/lib/types";
 import { Country, ShippingAddress } from "@prisma/client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import CheckoutProductCard from "../cards/checkout-product";
 import ShippingAddresses from "../shared/shipping-address";
 import PlaceOrder from "../cards/place-order";
+import { updateCheckoutProductstWithLatest } from "@/queries/user";
 
 interface Props {
   cart: CartWithCartItemsType;
@@ -35,6 +36,21 @@ export default function CheckoutContainer({
     (add) => add.countryId === selectedAddress?.countryId
   )?.country;
 
+  useEffect(() => {
+    const hydrateCheckoutCart = async () => {
+      const updatedCart = await updateCheckoutProductstWithLatest(
+        items,
+        activeCountry
+      );
+
+      setData(updatedCart);
+    };
+
+    if (items.length > 0) {
+      hydrateCheckoutCart();
+    }
+  }, [activeCountry]);
+
   return (
     <div className="w-full flex flex-col gap-y-2 lg:flex-row">
       <div className="space-y-2 lg:flex-1">
@@ -46,7 +62,11 @@ export default function CheckoutContainer({
         />
 
         {items.map((product) => (
-          <CheckoutProductCard key={product.variantId} product={product} />
+          <CheckoutProductCard
+            key={product.variantId}
+            product={product}
+            isDiscounted={data.coupon?.storeId === product.storeId}
+          />
         ))}
       </div>
 

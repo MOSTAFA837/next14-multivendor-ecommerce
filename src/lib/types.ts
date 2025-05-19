@@ -25,6 +25,8 @@ import {
   Spec,
   SubCategory,
   User,
+  Coupon,
+  Store,
 } from "@prisma/client";
 
 import countries from "@/data/countries.json";
@@ -241,6 +243,7 @@ export type SortOrder = "asc" | "desc";
 
 export type CartWithCartItemsType = Cart & {
   items: CartItem[];
+  coupon: (Coupon & { store: Store }) | null;
 };
 
 export type UserShippingAddressType = ShippingAddress & {
